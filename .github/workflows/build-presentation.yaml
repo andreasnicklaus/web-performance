@@ -16,8 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Marp Build
-        uses: docker://marpteam/marp-cli:v1.7.0
+        uses: docker://marpteam/marp-cli:v3.4.0
         with:
+          entrypoint: /home/marp/.cli/docker-entrypoint
           args: presentation.md -o docs/index.html --html --title="Optimierung einer VueJS-Web-App" --author="Andreas Nicklaus" --theme-set ./style/rose-pine.css
         env:
           MARP_USER: root:root
