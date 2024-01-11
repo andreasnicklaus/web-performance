@@ -130,12 +130,12 @@ Web Performance Optimierung
 
 # Änderungen
 <!-- _class: resultTable goldTable leftTable -->
-| Version | Änderungen                           |
-| :------ | :----------------------------------- |
-| v00     | -                                    |
-| v01     | Prerendering für statische Seiten    |
-| v02     | Render-Blocking Stylesheets entfernt |
-| v03     | -                                    |
+| Version | Änderungen                                                        |
+| :------ | :---------------------------------------------------------------- |
+| v00     | -                                                                 |
+| v01     | Prerendering für statische Seiten                                 |
+| v02     | Render-Blocking Stylesheets entfernt <div style="width: 700px;"/> |
+| v03     | -                                                                 |
 <!-- TODO: keine funktionalen Änderungen in v03??? -->
 
 # Änderungen
@@ -229,15 +229,17 @@ Danach in `index.html`:
 ```html
 <picture>
   <source
-    :srcset="`${appleDevices_avif_1} 200w, ${appleDevices_avif_2} 783w, ${appleDevices_avif_3} 1123w, ${appleDevices_avif} 1920w`"
+    :srcset="`${appleDevices_avif_1} 200w, ${appleDevices_avif_2} 783w,
+    ${appleDevices_avif_3} 1123w, ${appleDevices_avif} 1920w`"
   />
   <source
-    :srcset="`${appleDevices_webp_1} 200w, ${appleDevices_webp_2} 783w, ${appleDevices_webp_3} 1123w, ${appleDevices_webp} 1920w`"
+    :srcset="`${appleDevices_webp_1} 200w, ${appleDevices_webp_2} 783w,
+    ${appleDevices_webp_3} 1123w, ${appleDevices_webp} 1920w`"
   />
   <img
     :src="appleDevices_webp"
-    alt="Ein iPhone, eine Apple Watch, Apple Airpods und eine weiße Tastatur liegen auf violettem Grund. Auf dem Display des
-    iPhones ist das Leto-Logo zu sehen."
+    alt="Ein iPhone, eine Apple Watch, Apple Airpods und eine weiße Tastatur liegen
+     auf violettem Grund. Auf dem Display des iPhones ist das Leto-Logo zu sehen."
     width="100%"
     :style="{
       height: this.$vuetify.breakpoint.width < 768 ? '40vh' : '90vh',
