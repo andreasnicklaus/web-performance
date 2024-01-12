@@ -10,6 +10,10 @@ style: |
     margin: auto;
     background-color: transparent;
   }
+  img[alt~=rounded]{
+    margin: auto;
+    border-radius: 999px;
+  }
 
   section.resultTable table {
     min-width: 80%;
@@ -33,6 +37,10 @@ style: |
     color: inherit;
     text-decoration: overline;
   }
+  section.resultTable em {
+    font-weight: 300;
+    font-style: normal;
+  }
 
   section.leftTable table {
     margin-left: 0;
@@ -52,6 +60,10 @@ style: |
   }
   section.irisTable tr {
     color: var(--iris);
+  }
+
+  a {
+    color: inherit;
   }
 
   code {
@@ -135,18 +147,16 @@ Web Performance Optimierung
 | v00     | -                                                                 |
 | v01     | Prerendering für statische Seiten                                 |
 | v02     | Render-Blocking Stylesheets entfernt <div style="width: 700px;"/> |
-| v03     | -                                                                 |
-<!-- TODO: keine funktionalen Änderungen in v03??? -->
+| v03     | *Updated Docker Build Workflow*                                   |
 
 # Änderungen
 <!-- _class: resultTable goldTable leftTable -->
 | Version | Änderungen                                        |
 | :------ | :------------------------------------------------ |
-| v04     | -                                                 |
+| v04     | *Verbessertes Access Management*                  |
 | v05     | AVIF-Bilder, Chained Request für Fonts entfernt   |
 | v06     | Lineare Verteilung der Bildgrößen                 |
 | v07     | Import nur der genutzten Icons anstelle von allen |
-<!-- TODO: keine funktionalen Änderungen in v03??? -->
 
 # Änderungen
 <!-- _class: resultTable goldTable leftTable -->
@@ -177,7 +187,16 @@ new PrerenderSpaPlugin({
   })
 ```
 
-<!-- TODO: LCP, FCP, LH Performance, TTI -->
+# v01: Prerendering
+
+<!-- _class: resultTable loveTable -->
+
+|                          | Original |     v01 |
+| :----------------------- | -------: | ------: |
+| Time To Interactive      |     4,6s | *14,5s* |
+| Largest Contentful Paint |   *5,2s* |    3,3s |
+| First Contentful Paint   |   *4,6s* |    3,3s |
+| Lighthouse Performance   |     *33* |      57 |
 
 # v02: Renderblocking-Stylesheets entfernt
 
@@ -204,10 +223,17 @@ postProcess: (renderedRoute) => {
     return renderedRoute;
   }
 ```
+# v02: Renderblocking-Stylesheets entfernt
 
-<!-- TODO: First Contentful Paint, TTI-Verschlechterung, CLS = 0 -->
+<!-- _class: resultTable loveTable -->
 
-# v03: Chained Request für Fonts entfernt
+|                         | Original |     v02 |
+| :---------------------- | -------: | ------: |
+| Time To Interactive     |     4,6s | *14,5s* |
+| First Contentful Paint  |   *4,6s* |    3,3s |
+| Cumulative Layout Shift |    0,751 | *0,000* |
+
+# v05: Chained Request für Fonts entfernt
 
 Bevor in `App.vue`:
 ```html
@@ -224,7 +250,7 @@ Danach in `index.html`:
 />
 ```
 
-# v05: 
+# v05: AVIF-Bilder
 
 ```html
 <picture>
@@ -263,7 +289,16 @@ Danach in `index.html`:
 
 ![bg right:60%](img/mockup-coffee-macbook.avif)
 
-<!-- TODO: Ladezeiten (Speed Index), Page Weight, TTI, CLS -->
+# v05: Format Beispiel
+
+<!-- _class: resultTable loveTable -->
+
+|                         |   Original |      v05 |
+| :---------------------- | ---------: | -------: |
+| Time To Interactive     |       4,6s |   *6,1s* |
+| Speed Index             |     *7,5s* |     2,5s |
+| Page Weight             | *2,789 MB* | 1,140 MB |
+| Cumulative Layout Shift |      0,751 |     0,78 |
 
 # v06: Lineare Verteilung der Bildgrößen
 
@@ -314,6 +349,7 @@ configureWebpack: (config) => {
   }
 }
 ```
+# v08: JS-Chunks gesplittet
 
 <!-- TODO: Länge der Liste der generierten JS-Dateien vergleichen -->
 
@@ -364,6 +400,37 @@ ohne Animationen:
 ```
 
 ---
+<!-- _class: resultTable irisTable -->
+
+| Lighthouse Performance | Score |
+| :--------------------- | ----: |
+| Original               |    33 |
+| v01: Prerendering      |    57 |
+---
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Lighthouse%20Performance%20Score",data:[33,57,45,40,46,51,49,52,54,54,44,54],backgroundColor:"%23c4a7e755",borderColor:"%23c4a7e7"}]}})
+
+---
+<!-- _class: resultTable goldTable -->
+
+| Time To Interactive     | Score |
+| :---------------------- | ----: |
+| Original                |  4,6s |
+| v10: lazy-loaded Images |  3,9s |
+---
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Time%20To%20Interactive",data:[4.6,14.5,10.4,14.7,13.3,6.1,4.9,3.9,4.1,4.1,3.9,4],backgroundColor:"%23e9b77277",borderColor:"%23e9b772"}]}})
+
+---
+<!-- _class: resultTable roseTable -->
+
+| Largest Contentful Paint | Score |
+| :----------------------- | ----: |
+| Original                 |  5,2s |
+| v11: lazy-loaded SVGs    |  2,6s |
+
+---
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Largest%20Contentful%20Paint",data:[5.2,3.3,2.6,2.3,2.4,2.5,2.5,2.5,2.5,2.7,4.1,2.6],backgroundColor:"%23ebbcba55",borderColor:"%23ebbcba"}]}})
+
+---
 
 <!-- _class: resultTable foamTable -->
 
@@ -376,14 +443,7 @@ ohne Animationen:
 | **Gesamt**                           | **612 kB** |
 
 ---
-<!-- _class: resultTable irisTable -->
-
-| Lighthouse Performance | Score |
-| :--------------------- | ----: |
-| Original               |    33 |
-| v01: Prerendering      |    57 |
-
-<!-- TODO: insert graph -->
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Page%20Weight",data:[2789,2737,2780,2737,2738,1140,778,615,628,627,628,627],backgroundColor:"%239ccfd855",borderColor:"%239ccfd8"}]}})
 
 # Was fehlt noch?
 
@@ -396,3 +456,14 @@ Nach dem Lighthouse Performance Report:
 
 Nach Image Linter:
 - Größere Bildversionen für große Bildschirme
+
+# 
+
+<!-- class: resultTable goldTable presenterTable -->
+
+
+
+|                                                                                                                                             | Andreas Nicklaus   <br>   ![h:200 rounded](https://media.licdn.com/dms/image/C5603AQGSV-yyfbgmeg/profile-displayphoto-shrink_200_200/0/1623311887654?e=1709769600&v=beta&t=qPack9A-o02XTnsWjvev62PBJEjEiMXSUscabd7qR_o) |                                                                                  |
+| :-----------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------: |
+|                                                                                                                                             |                                                                                                                                                                                                                         |                                                                                  |
+| [![h:40](https://upload.wikimedia.org/wikipedia/commons/9/96/Instagram.svg)<br>@andreasnicklaus](https://www.instagram.com/andreasnicklaus) |                                    [![h:40](https://upload.wikimedia.org/wikipedia/commons/8/81/LinkedIn_icon.svg)<br>andreasnicklaus](https://www.linkedin.com/in/andreasnicklaus/)                                    | [![h:40](img/Web.svg)<br>andreasnicklaus.de](https://www.www.andreasnicklaus.de) |
