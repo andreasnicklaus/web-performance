@@ -62,12 +62,17 @@ style: |
     color: var(--iris);
   }
 
-  a {
-    color: inherit;
-  }
 
   code {
     --color-prettylights-syntax-string: #478dff
+  }
+
+  section.centered {
+    text-align: center;
+  }
+  section.centered h1 {
+    font-size: 3em;
+    font-weight: 700;
   }
 ---
 
@@ -77,19 +82,40 @@ Andreas Nicklaus
 Web Performance Optimierung
 20.01.2024
 
+[web-performance.andreasnicklaus.de](https://web-performance.andreasnicklaus.de)
+![bg](https://v00.leto.andreasnicklaus.de/img/bbblurry.07a8068d.svg)
+
+<!-- Mein Thema:
+
+Optimierung der Webperformance eines VueJS Projekts durch Konfiguration der Vue-Templates und des Build-Prozesses.
+ -->
+
 # Agenda
 
 1. Probleme der Webseite
 2. Gemachte Änderungen
 3. Ergebnisse
 4. Was fehlt noch?
+![bg](https://v00.leto.andreasnicklaus.de/img/bbblurry.07a8068d.svg)
 
+<!-- 
+Um zu zeigen, was ich gemacht habe, habe ich für heute meine Präsentation in 4 Teile unterteilt:
+
+1. Vorstellung der Seite und was damit schlecht oder zumindest verbessungswürdig war
+2. 11 Schritte, die ich vorgenommen habe, und was die (nicht) geändert haben
+3. Ergebnisse, was rausgekommen ist
+4. Ausblick, was noch fehlt
+ -->
 
 # Die Webseite
 
 [https://leto.andreasnicklaus.de](https://leto.andreasnicklaus.de)
 
 ![h:400 center](img/Homepage.png)
+
+<!-- 
+Die Seite, um die es geht, könnt ihr euch nebenbei oder im Anschluss unter leto.andreasnicklaus.de angucken und nutzen.
+ -->
 
 # Infos zur Seite
 
@@ -106,6 +132,18 @@ Web Performance Optimierung
   - ![h:30](https://nginxproxymanager.com/icon.png) Nginx Proxy Manager
   - ![h:30](https://cdn.icon-icons.com/icons2/2699/PNG/512/nginx_logo_icon_169915.png) Nginx
 
+<!-- 
+Die Seite, über die ich heute sprechen will, ist eine Marketing-Seite für Leto, eine Anwendung für Pyhsiotherapiepraxen.
+
+Zusätzlich ist eine Nutzerverwaltung und ein Admin-Dashboard für die Anwendung eigebunden.
+Die Seite ist also zumindest zum Teil dynamisch.
+
+Startseite: 6 animierte Elemente, 2 große PNGs
+
+Dev: VueJS, Bootstrap-Vue, Vuetify
+Deployment: AWS EC2-Instanz, Nginx Proxy Manager, Docker, Nginx
+ -->
+
 # Seitenstruktur
 
 - 9 statische & indexierte Seiten
@@ -114,8 +152,15 @@ Web Performance Optimierung
   - Admin-Dashboard
   - Checkout
 
+<!-- 
+9 statische indexierte Seiten
+3 dynamische & nicht-indexierte Seiten
+ -->
 
 # Probleme der Webseite
+![bg](https://v00.leto.andreasnicklaus.de/img/bbblurry.07a8068d.svg)
+
+<!-- Lass uns über die Probleme der Webseite reden -->
 ---
 
 <!-- _class: resultTable loveTable -->
@@ -126,6 +171,14 @@ Web Performance Optimierung
 | Largest Contentful Paint |     5,2s |
 | Lighthouse Performance   |       33 |
 | Page Weight              | 2,789 MB |
+
+<!-- Ich habe 4 Indikatoren, wo der Effekt meiner Arbeit am besten merklich ist.
+
+1. Lange TTI
+2. Lang ladendes LCP
+3. Lighthouse Performance von 33
+4. Page Weight von fast 2,8 MB
+ -->
 
 ---
 
@@ -140,16 +193,31 @@ Web Performance Optimierung
 | HTML        |         515 |
 | **Gesamt**  | **~2,7 MB** |
 
-# Änderungen
+<!-- Beim Page Weight, was ist am am Größten?
+
+1. Bilder 78%
+2. Javascript 17,4%
+3. CSS 8,2%
+4. Fonts 0,5%
+5. HTML 0,01%
+ -->
+
+# Änderungen 0-3
 <!-- _class: resultTable goldTable leftTable -->
 | Version | Änderungen                                                        |
 | :------ | :---------------------------------------------------------------- |
-| v00     | -                                                                 |
+| Orignal | -                                                                 |
 | v01     | Prerendering für statische Seiten                                 |
 | v02     | Render-Blocking Stylesheets entfernt <div style="width: 700px;"/> |
 | v03     | *Updated Docker Build Workflow*                                   |
 
-# Änderungen
+<!-- 
+Welche Änderungen habe ich also vorgenommen?
+
+Liste an interessanten Änderungen stelle ich im Detail vor, deshalb überspringen wir das!
+ -->
+
+# Änderungen 4-7
 <!-- _class: resultTable goldTable leftTable -->
 | Version | Änderungen                                        |
 | :------ | :------------------------------------------------ |
@@ -158,7 +226,7 @@ Web Performance Optimierung
 | v06     | Lineare Verteilung der Bildgrößen                 |
 | v07     | Import nur der genutzten Icons anstelle von allen |
 
-# Änderungen
+# Änderungen 8-11
 <!-- _class: resultTable goldTable leftTable -->
 | Version | Änderungen                                                  |
 | :------ | :---------------------------------------------------------- |
@@ -187,6 +255,16 @@ new PrerenderSpaPlugin({
   })
 ```
 
+<!-- 
+Erster Schritt:
+
+Im Build-Prozess mit dem PrerenderSpaPlugin, weil Vue mit einem HTML-Skelett arbeitet und es nach dem Laden des JS füllt.
+
+- nur die statischen Seiten
+- gut für den Index
+- zusätzlich werden alle Skripte mit den "defer" versehen, damit es dem Rendering des jetzt vorhandenen vollständigen HTML.
+ -->
+
 # v01: Prerendering
 
 <!-- _class: resultTable loveTable -->
@@ -197,6 +275,15 @@ new PrerenderSpaPlugin({
 | Largest Contentful Paint |   *5,2s* |    3,3s |
 | First Contentful Paint   |   *4,6s* |    3,3s |
 | Lighthouse Performance   |     *33* |      57 |
+
+<!-- 
+Der Effekt des Prerendering ist gleich erkennbar.
+
+- Die TTI verdreifacht sich auf fast 15 Sekunden, weil es einfach mehr zu Laden und animieren gibt
+- LCP wird schneller geladen, weil das HTML zum Laden der Bilder früher da ist
+- FCP genauso
+- aus diesen 2 Gründen: Performance 57
+ -->
 
 # v02: Renderblocking-Stylesheets entfernt
 
@@ -223,15 +310,40 @@ postProcess: (renderedRoute) => {
     return renderedRoute;
   }
 ```
+
+<!-- 
+Im Zweiten Schritt habe ich versucht, Render-Blocking CSS automatisiert zu entfernen:
+
+Prerendering-Plugin erweitern durch replace-Funktionen
+Durch Vue-Plugins 2 Versionen, Stylesheets einzubinden
+1. link-href-rel
+2. link-rel-href
+
+Wird zu
+<link> mit rel=preload, durch js rel=stylesheet
+<noscript>
+<link rel=stylesheet>
+</noscript>
+ -->
+
 # v02: Renderblocking-Stylesheets entfernt
 
 <!-- _class: resultTable loveTable -->
+|                          | Original |     v01 |     v02 |
+| :----------------------- | -------: | ------: | ------: |
+| Time To Interactive      |     4,6s | *14,5s* | *10,4s* |
+| First Contentful Paint   |   *4,6s* |  *3,3s* |    0,9s |
+| Largest Contentful Paint |   *5,2s* |  *3,3s* |    2,6s |
+| Lighthouse Performance   |     *33* |      57 |    *45* |
 
-|                         | Original |     v02 |
-| :---------------------- | -------: | ------: |
-| Time To Interactive     |     4,6s | *14,5s* |
-| First Contentful Paint  |   *4,6s* |    3,3s |
-| Cumulative Layout Shift |    0,751 | *0,000* |
+<!-- 
+Was hat das gebracht?
+
+- TTI zum 4 Sekunden verbessert
+- FCP um 2,4 Sekunden, über 70% verbessert
+- LCP um 0,7 Sekunden verbessert, jetzt 50% des Originals
+- Lighthouse Performance von 57 auf 45 runter, k.A. wieso
+ -->
 
 # v05: Chained Request für Fonts entfernt
 
@@ -250,35 +362,61 @@ Danach in `index.html`:
 />
 ```
 
-# v05: AVIF-Bilder
+<!-- 
+[v05 Teil 1]
+v03 und v04 waren nicht zur Performanceoptimierung, deshalb v05: Chained Requests für Fonts
+
+Link zur Font in index.html anstelle vom Verweis im style-Block in App.vue
+ -->
+
+# v05: AVIF-Bilder (alt)
+
+```html
+<img
+  :src="appleDevices"
+  :srcset="`${appleDevices_webp_1} 200w, ${appleDevices_webp_2} 783w,
+  ${appleDevices_webp_3} 1123w, ${appleDevices_webp} 1920w`"
+  sizes="(max-width: 768px) 100vw, 50vw"
+/>
+```
+
+<!--
+[v05 Teil 2]
+PNG zu AVIF-Format
+
+Außerdem in v05 habe ich die Einbindung von Bildern auf der Seite getauscht. Was vorher wie hier ein Image-Tag mit einem Srcset auf Webp-Bilder war,...
+ -->
+
+# v05: AVIF-Bilder (neu)
 
 ```html
 <picture>
   <source
     :srcset="`${appleDevices_avif_1} 200w, ${appleDevices_avif_2} 783w,
-    ${appleDevices_avif_3} 1123w, ${appleDevices_avif} 1920w`"
+      ${appleDevices_avif_3} 1123w, ${appleDevices_avif} 1920w`"
+    sizes="(max-width: 768px) 100vw, 50vw"
   />
   <source
     :srcset="`${appleDevices_webp_1} 200w, ${appleDevices_webp_2} 783w,
-    ${appleDevices_webp_3} 1123w, ${appleDevices_webp} 1920w`"
+      ${appleDevices_webp_3} 1123w, ${appleDevices_webp} 1920w`"
+    sizes="(max-width: 768px) 100vw, 50vw"
   />
-  <img
-    :src="appleDevices_webp"
-    alt="Ein iPhone, eine Apple Watch, Apple Airpods und eine weiße Tastatur liegen
-     auf violettem Grund. Auf dem Display des iPhones ist das Leto-Logo zu sehen."
-    width="100%"
-    :style="{
-      height: this.$vuetify.breakpoint.width < 768 ? '40vh' : '90vh',
-      objectFit: 'cover',
-      objectPosition: '72%',
-    }"
-    />
+  <img :src="appleDevices_webp" ... />
 </picture>
 ```
+<!-- 
+...ist jetzt ein Picture-Tag mit 2 Source-Tags:
+
+1. für AVIF-Bilder
+2. für Webp-Bilder
+
+mit den gleichen Größen.
+ -->
 
 # v05: Format Beispiel
 
-- PNG: **611 kB**
+- PNG: **611 kB** 
+(nicht verwendet)
 - WEBP:
   - **126 kB** (Original)
   - **112 kB** (klein)
@@ -286,19 +424,36 @@ Danach in `index.html`:
   - **374 kB** (Original)
   - **48 kB** (klein)
 
-
 ![bg right:60%](img/mockup-coffee-macbook.avif)
+
+<!-- 
+Für die Conversion vom Originalbild in PNG habe ich das NPM-Package `sharp` benutzt und eine kleine Entdeckung für mich gemacht
+
+1. Im Webp-Format ist das Bild in der gleichen Größe knapp ein Sechstel groß, aber die nächstkleinere Größe ist maginal kleiner
+2. Im AVIF-Format ist das Bild in Originalgröße nur knapp halb so groß, aber die nächstkleinere Größe ist etwa ein Neuntel vom Orignalgroßen AVIF.
+
+Rechts das Bild, von dem die Daten kommen.
+ -->
 
 # v05: Format Beispiel
 
 <!-- _class: resultTable loveTable -->
 
-|                         |   Original |      v05 |
-| :---------------------- | ---------: | -------: |
-| Time To Interactive     |       4,6s |   *6,1s* |
-| Speed Index             |     *7,5s* |     2,5s |
-| Page Weight             | *2,789 MB* | 1,140 MB |
-| Cumulative Layout Shift |      0,751 |     0,78 |
+|                         |   Original |        v04 |      v05 |
+| :---------------------- | ---------: | ---------: | -------: |
+| Time To Interactive     |       4,6s |    *13,3s* |   *6,1s* |
+| Speed Index             |     *7,5s* |     *4,1s* |     2,5s |
+| Page Weight             | *2,789 MB* | *2,738 MB* | 1,140 MB |
+| Cumulative Layout Shift |      0,751 |    *0,936* |  *0,780* |
+
+<!-- 
+Was hat das gebracht?
+
+- TTI wieder auf einen semi-akzeptablen Wert von 6,1 Sekunden zurückgebracht
+- SI um 1,5 Sekunden verbessert auf neuen Bestwert von 2,5 Sekunden
+- Page Weigth um fast 60% reduziert -> Bilder
+- CLS wieder auf Orignalwert zurückgebracht -> Image Sizes
+ -->
 
 # v06: Lineare Verteilung der Bildgrößen
 
@@ -320,6 +475,13 @@ nachher:
 />
 ```
 
+<!-- 
+In Version 6 habe ich die Schrittweite zwischen den Bildgrößen geändert
+
+von 4 Bildern
+auf 6 Bildern mit gleicher Schrittweite
+ -->
+
 # v07: Import nur der genutzten Icons
 
 ```js
@@ -335,6 +497,16 @@ Vue.component("b-icon-person", BIconPerson)
 
 ```
 
+<!-- 
+Genug von Bildern!
+
+In Version 7 und 8 habe ich den JS-Dateien angenommen.
+
+Als erstes ist mir aufgefallen, dass ein Großteil der JS-Module von Bootstrap-Icons eingenommen wurde, weil ich sie alle importiere.
+
+Also habe ich nur die genutzten Icons importiert und als Vue-Componenten registriert.
+ -->
+
 # v08: JS-Chunks gesplittet
 
 ```js
@@ -349,9 +521,31 @@ configureWebpack: (config) => {
   }
 }
 ```
+
+<!-- 
+In v08 habe ich zusätzlich mit den JS-Chunks rumgespielt und mit den Built-In Optionen von Webpack die Größe der Dateien begrenzt.
+
+Motivation dafür war, dass die als erstes geladenen JS-Datei sehr groß war und vieles davon nicht auf der Startseite genutzt wird.
+ -->
+
 # v08: JS-Chunks gesplittet
 
-<!-- TODO: Länge der Liste der generierten JS-Dateien vergleichen -->
+<!-- _class: resultTable loveTable -->
+
+
+|                      |       v06 |     v07 |      v08 |
+| :------------------- | --------: | ------: | -------: |
+| Anzahl JS-Dateien    |      *30* |    *30* |       62 |
+| Raw Größe JS-Dateien | *5,75 MB* | 4,95 MB |  4,95 MB |
+| Page Weight          |  *778 kB* |  612 kB | *628 kB* |
+
+<!-- 
+Was hats gebracht?
+
+- Anzahl und damit Granulatität an JS-Dateien verdoppelt
+- Durch Bootstrap Icons ca. 14% raw eingepart
+- Durch Bootstrap Icons ca. 21% gzipped eingepart
+ -->
 
 # v09: Animationen entfernt
 
@@ -374,8 +568,15 @@ ohne Animationen:
 </div>
 ```
 
-# v10: Alle Bilder werden lazy-loaded
+<!-- 
+Animationen im Filmstrip als Visual Change vorhanden.
+Max 1100ms Verzügerung bis Start.
 
+Keine Änderung in sonstigen Metriken.
+ -->
+
+# Alle Bilder (v10) & SVGs (v11) werden lazy-loaded
+v10:
 ```html
 <picture>
   <source .../>
@@ -386,18 +587,43 @@ ohne Animationen:
   />
 </picture>
 ```
-# v10: Zuerst sichtbare SVGs werden lazy-loaded
-
+v11:
 ```html
 <img
-  :src="LetoText"
-  alt="Das Leto-Logo. Ein Violetter Schriftzug 'Leto' mit einer Kerbe im O."
-  :style="{ width: '100%' }"
-  width="475"
-  height="220"
+  ...
   loading="lazy"
 />
 ```
+
+<!-- 
+Formal gefehlt hats noch gefehlt, dass Bilder Lazy-Loaded geladen werden, deswegen habe ich das noch in Version 10 hinzugefügt und ...
+in Version 11 habe ich das noch für SVGs gemacht.
+ -->
+
+# v10 & v11: Lazy-loading
+
+<!-- _class: resultTable loveTable -->
+
+|                          |    v09 |    v10 |  v11 |
+| :----------------------- | -----: | -----: | ---: |
+| Lighthouse Performance   |     54 |   *44* |   54 |
+| Speed Index              | *2,6s* | *3,9s* | 2,5s |
+| Largest Contentful Paint | *2,7s* | *4,1s* | 2,6s |
+
+<!-- 
+Was hat es gebracht?
+
+Aus irgendeinem Grund, hat das Lazy-Loading von Bildern sowohl die Lighthouse Performance als auch Speed Index und LCP verschlechtert, was sich durch das Lazy-Loading von SVGs wieder ausgebessert hat.
+
+Wenn also jemand eine Vermutung hat, woran das gelegen hat, bitte ich herzlich um Hilfe.
+ -->
+
+# Ergebnisse - Visualisierungen
+![bg](https://v00.leto.andreasnicklaus.de/img/bbblurry.07a8068d.svg)
+
+<!-- 
+Ich habe die Metriken und Ergebnisse noch visualisiert, damit die Verbesserungen und Verschlechterungen besser sichtbar werden.
+ -->
 
 ---
 <!-- _class: resultTable irisTable -->
@@ -406,9 +632,12 @@ ohne Animationen:
 | :--------------------- | ----: |
 | Original               |    33 |
 | v01: Prerendering      |    57 |
+| v11: Lazy-Loading      |    54 |
+<!-- Zuerst zur Lighthouse Performance, die ich erst von 33 auf 57 durch Prerendering gehoben habe.
+Bis heute ist der Score bei 54. -->
 ---
-![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Lighthouse%20Performance%20Score",data:[33,57,45,40,46,51,49,52,54,54,44,54],backgroundColor:"%23c4a7e755",borderColor:"%23c4a7e7"}]}})
-
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Lighthouse%20Performance%20Score",data:[33,57,45,40,46,51,49,52,54,54,44,54],backgroundColor:"%23c4a7e755",borderColor:"%23c4a7e7"}]},options:{scales:{xAxes:[{scaleLabel:{display:true,labelString:'Version'}}],yAxes:[{scaleLabel:{display:true,labelString:'Score'}}]}}})
+<!-- Hier sehen wir, wie sehr der Score geschwankt hat -->
 ---
 <!-- _class: resultTable goldTable -->
 
@@ -416,20 +645,24 @@ ohne Animationen:
 | :---------------------- | ----: |
 | Original                |  4,6s |
 | v10: lazy-loaded Images |  3,9s |
+<!-- Die Time-To-Interactive habe ich runtergebracht von 4,6s auf 3,9s -->
 ---
-![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Time%20To%20Interactive",data:[4.6,14.5,10.4,14.7,13.3,6.1,4.9,3.9,4.1,4.1,3.9,4],backgroundColor:"%23e9b77277",borderColor:"%23e9b772"}]}})
-
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Time%20To%20Interactive",data:[4.6,14.5,10.4,14.7,13.3,6.1,4.9,3.9,4.1,4.1,3.9,4],backgroundColor:"%23e9b77277",borderColor:"%23e9b772"}]},options:{scales:{xAxes:[{scaleLabel:{display:true,labelString:'Version'}}],yAxes:[{scaleLabel:{display:true,labelString:'Sekunden'},ticks:{min:0}}]}}})
+<!-- Und hier können wir nochmal begutachten, dass im Laufe des Projekts durch Prerendering die TTI erst hochgegangen und dann durch die Umstellung auf AVIF-Bilder in Version 5 wieder runtergegangen ist. -->
 ---
 <!-- _class: resultTable roseTable -->
 
-| Largest Contentful Paint | Score |
-| :----------------------- | ----: |
-| Original                 |  5,2s |
-| v11: lazy-loaded SVGs    |  2,6s |
+| Largest Contentful Paint    | Score |
+| :-------------------------- | ----: |
+| Original                    |  5,2s |
+| v05: AVIF, Chained Requests |  2,5s |
+| v11: lazy-loaded SVGs       |  2,6s |
+<!-- Dann kommen wir jetzt zu den Kriterien, die sich tatsächlich verbessert haben.
 
+Den LCP habe ich halbieren können, aber... -->
 ---
-![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Largest%20Contentful%20Paint",data:[5.2,3.3,2.6,2.3,2.4,2.5,2.5,2.5,2.5,2.7,4.1,2.6],backgroundColor:"%23ebbcba55",borderColor:"%23ebbcba"}]}})
-
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Largest%20Contentful%20Paint",data:[5.2,3.3,2.6,2.3,2.4,2.5,2.5,2.5,2.5,2.7,4.1,2.6],backgroundColor:"%23ebbcba55",borderColor:"%23ebbcba"}]},options:{scales:{xAxes:[{scaleLabel:{display:true,labelString:'Version'}}],yAxes:[{scaleLabel:{display:true,labelString:'Sekunden'},ticks:{min:0}}]}}})
+<!-- wie eben angesprochen, gibt es einen Auschlag durch Lazy-Loading, den ich nicht erklären kann. -->
 ---
 
 <!-- _class: resultTable foamTable -->
@@ -441,10 +674,12 @@ ohne Animationen:
 | v06: lineare Bilder-Größenverteilung |    -362 kB |
 | v07: Importiere nur genutzte Icons   |    -166 kB |
 | **Gesamt**                           | **612 kB** |
+<!-- Zu guter Letzt das Page Weight habe ich reduziert bekommen von 2789 kB auf 612kB.
 
+Das ist passiert in den Versionen 5, 6 und 7 durch Reduzierung der Bildgröße und importierten Icons. -->
 ---
-![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Page%20Weight",data:[2789,2737,2780,2737,2738,1140,778,615,628,627,628,627],backgroundColor:"%239ccfd855",borderColor:"%239ccfd8"}]}})
-
+![center](https://quickchart.io/chart?c={type:"line",data:{labels:['v00','v01','v02','v03','v04','v05','v06','v07','v08','v09','v10','v11'],datasets:[{label:"Page%20Weight",data:[2789,2737,2780,2737,2738,1140,778,615,628,627,628,627],backgroundColor:"%239ccfd855",borderColor:"%239ccfd8"}]},options:{scales:{xAxes:[{scaleLabel:{display:true,labelString:'Version'}}],yAxes:[{scaleLabel:{display:true,labelString:'kB'},ticks:{min:0}}]}}})
+<!-- Das kann man an dem Graphen, dass die Versionen 5-7 tatsächlich effektiv waren und die Größe deutlich verbessert haben. -->
 # Was fehlt noch?
 
 Nach dem Lighthouse Performance Report:
@@ -457,10 +692,31 @@ Nach dem Lighthouse Performance Report:
 Nach Image Linter:
 - Größere Bildversionen für große Bildschirme
 
-# 
+<!-- Jetzt, wo wir gesehen haben, was ich gemacht und erreicht habe, können wir nochmal einen kurzen Ausblick drauf werfen, was ich noch machen sollte.
 
-<!-- class: resultTable goldTable presenterTable -->
+Nach dem Lighthouse Performance Report fehlt noch:
 
+1. CSS Pruning, dass ungenutztes CSS entfernt wird. Das habe ich bisher nicht zum Laufen bekommen.
+2. Da das Entfernen von Bootstrap-Icons so effektiv war, sollte Treeshaking auch noch automatisiert werden.
+3. Thread Work ist laut Performance Report auch sehr groß. Ich habe bisher noch keinen Anhaltspunkt, wie ich anfange.
+4. Das LCP-Bild dauert noch lange zu laden, deshalb sollte das Bild Preloaded werden, aber es ist größenabhängig, deshalb gehört da noch mehr Überlegung dazu.
+5. Außerdem durch den Nginx Proxy Manager nicht sonderlich effektiv gehandelt: Caching. Mittels einem CDN, könnte das sehr verbessert werden.
+
+Nach dem Image Linter, den ich verwendet habe:
+1. Von Hochkant-Bildern fehlen Bilder in großen Bildschirmgrößen
+
+-> Effektives Vergrößern von Bildern ohne höheren Datenaufwand
+ -->
+# Das wars!
+<!-- _class: centered -->
+Versions-URLs: [vXX.leto.andreasnicklaus.de](https://v00.leto.andreasnicklaus.de)
+
+![bg](https://v00.leto.andreasnicklaus.de/img/bbblurry.07a8068d.svg)
+
+---
+
+<!-- class: resultTable goldTable -->
+![bg](https://v00.leto.andreasnicklaus.de/img/bbblurry.07a8068d.svg)
 
 
 |                                                                                                                                             | Andreas Nicklaus   <br>   ![h:200 rounded](https://media.licdn.com/dms/image/C5603AQGSV-yyfbgmeg/profile-displayphoto-shrink_200_200/0/1623311887654?e=1709769600&v=beta&t=qPack9A-o02XTnsWjvev62PBJEjEiMXSUscabd7qR_o) |                                                                                  |
