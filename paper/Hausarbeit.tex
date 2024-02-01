@@ -1,0 +1,84 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{blindtext}
+\usepackage[margin=1in]{geometry}
+
+\usepackage[ngerman]{babel}
+\usepackage[autostyle=true,german=quotes]{csquotes}
+\usepackage[sfdefault]{roboto}
+\usepackage{hyperref}
+\hypersetup{
+    % urlbordercolor=1 1 1, % set the outline of URL references
+    % linkbordercolor=1 1 1, % set the outline of internal references
+}
+\usepackage{microtype}
+\usepackage{hyphenat}
+\hyphenation{Mathe-matik wieder-gewinnen}
+
+\title{Optimierung einer VueJS-Webseite}
+\author{Andreas Nicklaus}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\section{Vorstellung des Projekts}
+Diese Hausarbeit behandelt die Optimierung einer VueJS-Webseite im Rahmen des Seminars \enquote{Entwicklung von Rich Media Systemen} unter dem Motto \enquote{Web Performance Optimizations}.
+Zu diesem Zweck wurden mehrere Änderungen an einer bereits bestehenden Webseite vorgenommen, die mit VueJS entwickelt wurde.
+
+Die Webseite in diesem Projekt ist eine Marketingwebseite für das Onlinetool für Physiotherapiepraxen namens \enquote{Leto}.
+Die Webseite ist strikt getrennt von der Anwendung, umfasst aber mehrere Admin-Tools und die Nutzerkontenverwaltung.
+Die Kommunikation mit dem Backend-Server erfolgt über HTTP und ist für dieses Projekt nahezu vollkommen irrelevant.
+
+Gehostet wird die Webseite auf eine kostenlosen und minimal ausgestatteten AWS EC2 Instanz und mithilfe von Docker.
+Auf der Host-Maschine läuft zusätzlich auf Docker ein NGINX-Proxy-Manager Container, der die Requests mittels der Domain \enquote{leto.andreasnicklaus.de} an den richtigen Container weiterleitet.
+Die Erstellung des Docker-Images erfolgt automatisiert in Github Actions und hat folgende relevante Build-Schritte:
+
+\begin{enumerate}
+  \item Installation der zum Buildprozess notwendigen Pakete (apt-get und npm)
+  \item Kopieren der Source-Dateien
+  \item Bauen der Webseite mittels \verb|npm run build|
+  \item Wechseln auf NGINX-alpine Docker Image
+  \item Kopieren der NGINX-Konfigurationsdatei
+  \item Kopieren der gebauten Webseite
+  \item Starten des NGINX-Servers
+\end{enumerate}
+
+Auf der Grundlage dieser Webseite, Entwicklungsumgebung und dieses Deployments werden im Folgenden Schwachstellen gesucht, Verbesserungsmöglichkeiten umrissen, deren Umsetzung beschrieben und Effekt ausgewertet.
+Zielsetzung dabei ist es, die Performance der Webseite im Allgemeinen zu verbessern, ohne den Aufwand für die Weiterentwicklung zu vergrößern oder die Größe des Dockerimages und somit der Speicheranforderungen and den Webserver zu vergrößern.
+
+\section{Testfall und Tools}
+Um die Performance der Webseite sowie den Effekt der Verbesserungsversuche zu bewerten, werden in diesem Kapitel genutzte Testtools und die beachteten Metriken beschrieben.
+
+\subsection{Tool A: WebPageTest}
+Das erste Tool, das zur Auswertung der Performance genutzt wurde, ist das Onlinetool WebPageTest, das unter der URL \href{https://www.webpagetest.org}{www.webpagetest.org} erreichbar ist.
+WebPageTest wurde von Patrick Meenan als internes Evaluationswerkzeug für AOL entwickelt und ist sein 2008 frei verfügbar.
+
+Mithilfe von WebPageTest können Ladezeiten, Verarbeitungsperformance und weitere Vergleichsmaßstäbe festgehalten, bzw. erstellt werden.
+Dabei wird hoher Wert darauf gelegt, den Programm- und Datenflow des Clients zu visualisieren und insbesondere zeitlich aufzudröseln.
+
+% TODO: hier weiterschreiben
+
+\subsection{Tool B: PageSpeed Insights}
+
+\subsection{Tool C: Lighthouse Chrome Extension}
+
+\subsection{Metriken und Maße}
+
+\section{Verbesserungsschritte}
+
+\subsection{Prerendering}
+\subsection{Render-Blocking Stylesheets}
+\subsection{Bildoptimierung}
+\subsection{JS-Optimierungen}
+\subsection{Lazy-Loading}
+
+\section{Experimente und Analyse}
+
+\subsection{Testergebnisse}
+\subsection{Interpretation}
+
+\section{Fazit}
+
+\end{document}
