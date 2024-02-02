@@ -2,18 +2,69 @@
 
 \usepackage{blindtext}
 \usepackage[margin=1in]{geometry}
+\usepackage{xcolor} %use color
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Codebeispiel}
+\lstset{ %
+  backgroundcolor=\color{white}, % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\footnotesize, % the size of the fonts that are used for the code
+  breakatwhitespace=false, % sets if automatic breaks should only happen at whitespace
+  breaklines=true, % sets automatic line breaking
+  commentstyle=\color{mygreen}, % comment style
+  extendedchars=true, % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  keepspaces=true, % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue}, % keyword style
+  stringstyle=\color{orange}, % string literal style
+  tabsize=2, % sets default tabsize to 2 spaces
+}
+\lstdefinelanguage{JavaScript}{
+  morekeywords=[1]{break, continue, delete, else, for, function, if, in,
+    new, return, this, typeof, var, void, while, with},
+  % Literals, primitive types, and reference types.
+  morekeywords=[2]{false, null, true, boolean, number, undefined,
+    Array, Boolean, Date, Math, Number, String, Object},
+  % Built-ins.
+  morekeywords=[3]{eval, parseInt, parseFloat, escape, unescape},
+  sensitive,
+  morecomment=[s]{/*}{*/},
+  morecomment=[l]//,
+  morecomment=[s]{/**}{*/}, % JavaDoc style comments
+  morestring=[b]',
+  morestring=[b]"
+}[keywords, comments, strings]
+\lstset{
+  language=JavaScript,
+  extendedchars=true,
+  basicstyle=\footnotesize\ttfamily,
+  showstringspaces=false,
+  showspaces=false,
+  numbers=left,
+  numberstyle=\footnotesize,
+  numbersep=5pt,
+  tabsize=2,
+  breaklines=true,
+  showtabs=false,
+  captionpos=b
+}
 
 \usepackage[ngerman]{babel}
 \usepackage[autostyle=true,german=quotes]{csquotes}
 \usepackage[sfdefault]{roboto}
 \usepackage{hyperref}
 \hypersetup{
-    % urlbordercolor=1 1 1, % set the outline of URL references
+    % urlbordercolor=1 1 1,S % set the outline of URL references
     % linkbordercolor=1 1 1, % set the outline of internal references
 }
 \usepackage{microtype}
 \usepackage{hyphenat}
 \hyphenation{Mathe-matik wieder-gewinnen}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{lscape}
 
 \title{Optimierung einer VueJS-Webseite}
 \author{Andreas Nicklaus}
@@ -51,34 +102,324 @@ Zielsetzung dabei ist es, die Performance der Webseite im Allgemeinen zu verbess
 \section{Testfall und Tools}
 Um die Performance der Webseite sowie den Effekt der Verbesserungsversuche zu bewerten, werden in diesem Kapitel genutzte Testtools und die beachteten Metriken beschrieben.
 
-\subsection{Tool A: WebPageTest}
+\subsection{Tool A: WebPageTest}\label{subsec:WebPageTest}
 Das erste Tool, das zur Auswertung der Performance genutzt wurde, ist das Onlinetool WebPageTest, das unter der URL \href{https://www.webpagetest.org}{www.webpagetest.org} erreichbar ist.
 WebPageTest wurde von Patrick Meenan als internes Evaluationswerkzeug für AOL entwickelt und ist sein 2008 frei verfügbar.
 
 Mithilfe von WebPageTest können Ladezeiten, Verarbeitungsperformance und weitere Vergleichsmaßstäbe festgehalten, bzw. erstellt werden.
 Dabei wird hoher Wert darauf gelegt, den Programm- und Datenflow des Clients zu visualisieren und insbesondere zeitlich aufzudröseln.
+Der größte Faktor, der für die Verwendung in diesem Projekt ausschlaggebend war, ist die Tatsache, dass jeder Test eine eindeutige ID hat, mit der die Testergebnisse nachvollziehbar gespeichert werden und mit der mehrere Tests miteinander verglichen werden können.
 
-% TODO: hier weiterschreiben
+Zusätzlich bietet das Tool die Möglichkeit, optional bei Tests einen Lighthousetest (s. \hyperref[subsec:Lighthouse]{Lighthouse Chrome Extension} und \hyperref[subsec:PageSpeed]{PageSpeed Insights}) und einen Carbon Control Test mitlaufen zu lassen, der den Kohlenstoffausstoß des Seitenaufrufs abschätzt.
+Außerdem werden weitere hilfreiche Tools wie ein Bildanalysetool vom selben Anbieter, eine Request-Map und ein Sicherheitscheck von Snyk direkt verlinkt.
+Im Rahmen dieser Arbeit werden lediglich die integrierten Ladeanalysen, der integrierte Lighthouse Report, die Ladezeitvisualisierung \enquote{Filmstrip}, der \enquote{Content Breakdown} und das externe Bildanalysetool verwendet.
 
-\subsection{Tool B: PageSpeed Insights}
+\subsection{Tool B: PageSpeed Insights}\label{subsec:PageSpeed}
+Ebenso wie WebPageTest ist auch PageSpeed Insights ein frei verfügbares Onlinetool zur Auswertung der Performance einer Webseite.
+Allerdings wird hier kaum Wert auf die Auswertung des Renderverhaltens der Webseite gelegt, sondern ein Lighthousetest durchgeführt. Das heißt, dass statische Tests in 4 Kategorien durchgeführt werden: Performance, Barrierefreiheit, Best Practices und Suchmaschinenoptimierung (SEO).
+Für dieses Projekt wird lediglich der Performance Report ausgewertet.
 
-\subsection{Tool C: Lighthouse Chrome Extension}
+Der Performance Report gibt einen Bewertung zwischen 0 und 100 ab, der sich aus 5 Metriken zusammensetzt, die sich wiederrum aus vielen Messungen ergeben:
+
+\begin{enumerate}
+  \item Der First Contentful Paint (FCP) gibt an, wie lange das Rendering dauert, bis das erste Element auf der Benutzeroberfläche angezeigt wird.
+  Es ist somit ein Maß dafür, wie lange die Auswertung und das Laden der Ressourcen dauert, bevor das Rendering des HTMLs beginnen kann.
+  \item Der Largest Contentful Paint (LCP) beschreibt das Ende des Renderings und gibt an, wie lange es gedauert hat, bis das letzte HTML-Element gerendert wurde.
+  Der LCP ist somit unter anderem ein Maß für die maximale Größe von gerenderten Dateien oder Elementen oder für Animationen, die die Fertigstellung des Renderings verzögern.
+  \item Die Total Blocking Time (TBT) ist die Zeit zwischen FCP und \enquote{Time To Interactive} (TTI, dt.: Zeit zur Interaktivität).
+  Für Benutzerfreundlichkeit sowie analytische Auswertung des Nutzerverhaltens ist diese Metrik besonders wichtig, da der Gedankengang und das Verhalten des Nutzers durch eine hohe TBT verzögert wird.
+  Ausgelöst kann eine hohe TBT durch langes Laden, Parsen und Ausführen von JavaScript, insb. bei ineffizientem Code.
+  \item Der Cumulative Layout Shift (CLS) misst die Bewegung von sichtbaren Elementen in der Nutzeransicht. Auch dieser Wert ist maßgeblich für die Benutzerfreundlichkeit und das effektive Nutzerverhalten auf der Webseite.
+  Der CLS wird von langsam nachladenden HTML-Elementen oder durch fehlende Größenangaben von Elementen verursacht, die widerrum das Verschieben von anderen Elementen bewirken.
+  \item Der Speed Index (SI) gibt an, wie schnell Inhalte während des Ladens visuell dargestellt werden. SI ist damit eine Metrik, die das sofortige Anzeigen von Elementen belohnt.
+  SI ist allerdings auch eine Metrik, die den Effekt von allen Bestandteilen der Webseite zusammenfasst und ist deshalb nicht immer ohne Wissen über den Sourcecode gut nachvollziehbar. 
+\end{enumerate}
+
+Im Rahmen dieser Arbeit wird PageSpeed Insights lediglich verwendet, um einen Vergleichs-, bzw. Bestätigungswert als \enquote{zweite Meinung} für den Lighthouse Report von WebPageTest und Erklärungen zu den Ergebnissen zu bekommen, weil die Performance je nach Zustand des Server und Clients zwischen Ausführungen der Tests schwanken kann.
+
+\subsection{Tool C: Lighthouse Chrome Extension}\label{subsec:Lighthouse}
+Die Google Chrome Extension \href{https://chromewebstore.google.com/detail/lighthouse/blipmdconlkpinefehnmjammfjpmpbjk}{Lighthouse} ist eine Erweiterung für den Browser Google Chrome und wurde von Google entwickelt.
+Mit dessen Hilfe können Lighthouse Reports lokal für im Browser geöffnete Seiten erstellt werden und bereits in der Entwicklungsphase manuell generiert werden.
+
+Die Auswertungen sind dabei dieselben wie bei \hyperref[subsec:WebPageTest]{WebPageTest} und \hyperref[subsec:PageSpeed]{PageSpeed Insights}.
+Allerdings sind die Ladezeiten hier oft geringer, weil die Seite bereits einmal geladen wurde und somit viele Ressourcen gecached werden können.
+Bei der Auswertung von lokalen Seiten in der Entwicklungsphase sind die Ladezeiten kürzer, weil Ressourcen bloß von der eigenen Maschine geladen werden müssen.
+
+Ebenso wie PageSpeed Insights wird die Lighthouse Chrome Extension im Rahmen dieser Arbeit bloß verwendet, um einen weiteren Vergleichswert für den Performance-Score zu bekommen.
 
 \subsection{Metriken und Maße}
+Für die Evaluierung der Testergebnisse durch die oben genannten Tools wurden die vielen Messwerte reduziert auf 9 Metriken, deren Entwicklung während des Optimierungsprozesses hier interessant sind.
+Dazu gehören von WebPageTest die \enquote{Page Weight} (dt.: Seitengewicht), die die Größe der geladenen Dateien in Bytes angibt, der LCP und SI (von hier an zur Unterscheidung mit \enquote{WPT LCP} und \enquote{WPT SI} abgekürzt).
+Von den Lighthouse Reports werden der generelle Performance Score (LH Score) sowie der FCP, LCP, SI, CLS und TTI ausgewertet.
 
 \section{Verbesserungsschritte}
+Tabelle~\ref{tab:versionen} zeigt die 12 Versionen, die in dieser Arbeit verglichen werden.
+Neben der Version v00, die die Version vor Projektbeginn bezeichnet, und den Versionen v03 und v04, die keine Performanceoptimierungsschritte, sondern lediglich inhaltliche Updates beinhalten, gibt es 9 Versionsschritte, die 5 Bestandteile der Webseite optimieren.
+Die folgenden Unterkapitel beschreiben die Versionsschritte und die Webseitbestandteile, die in den Versionen optimiert werden.
+
+Im Folgekaptitel~\ref{sec:experimente} wird beschrieben, wie die Versionen ausgewertet und welche Performanceverbesserungen dadurch erzielt wurden.
 
 \subsection{Prerendering}
-\subsection{Render-Blocking Stylesheets}
-\subsection{Bildoptimierung}
-\subsection{JS-Optimierungen}
-\subsection{Lazy-Loading}
+Die Version v01 führt als ersten Schritt ein, dass die Seiten prerendered werden.
+Mit Vue wird usprünglich ein HTML-Skelett geladen, dass mittels JavaScript mit Inhalten gefüllt wird.
+Deshalb muss der Browser in diesem Prozess erst das HTML-Skelett laden, anschließend den verlinkten JavaScript-Chunk-Vendor laden, der auf die relevanten JavaScript- und CSS-Dateien verweist.
+Erst, wenn all diese Dateien geladen werden, kann der Browser die Seite laden.
+Das ist sehr effizient, weil das initiale HTML sehr klein ist und das Navigieren zwischen Seiten weniger Ladeaufwand hat.
+Dieses Verfahren ist lediglich beim ersten Laden der Seite aufwendig, weil viele Dateien in sog. Chained Requests geladen werden.
 
-\section{Experimente und Analyse}
+Im Prerendering werden die Vue-Templates, die mittels Vue-Router einem Pfad zugewiesen werden, einmalig im Build-Prozess der Seite zusammengefügt und gerendered.
+So kann das HTML, das im allerersten Request empfangen wird gleich mit Inhalten gefüllt werden, die im Browser sofort gerendered werden.
+
+\begin{lstlisting}[language=JavaScript, caption={Implementierung des Single Page Prerenderings mithilfe des PrerenderSpaPlugins}, label={lst:prerender}]
+new PrerenderSpaPlugin({
+  staticDir: path.join(__dirname, 'dist'),
+  routes: routes.filter(r => r.meta?.prerender).map(r => r.path),
+  renderer: new PrerenderSpaPlugin.PuppeteerRenderer({
+    inject: {},
+    renderAfterElementExists: '[data-view]',
+  }),
+  postProcess: (renderedRoute) => {
+    renderedRoute.html = renderedRoute.html
+      .replace(/<script (.*?)>/g, '<script $1 defer>')
+      .replace('id="app"', 'id="app" data-server-rendered="true"');
+
+    return renderedRoute;
+  }
+})
+
+// im Vue-Template:
+// <div id="HomeView" data-view>
+\end{lstlisting}
+
+Das Codebeispiel~\ref{lst:prerender} zeigt die Implementierung mithilfe des NPM-Packages PrerenderSpaPlugin.
+Das Plugin nutzt den PuppeteerRenderer, der in einem Headless Chrome, die Seite öffnet und rendert.
+Sobald ein HTML-Element mit dem Attribut \enquote{data-view} vorhanden ist, speichert das Plugin das HTML der Seite ab.
+Deshalb muss das Vue-Template der View das Attribut data-view bekommen.
+
+Zusätzlich wurde in diesem Schritt jedes verlinkte Skript mit dem Attribut \enquote{defer} versehen, damit es dem Rendering nicht im Weg steht, und die App als prerendered annotiert. 
+Durch diesen Schritt können alle statischen Inhalte sofort nach Laden und Parsen des HTML gerendered werden und die Rendering-Engine muss nicht auf das Laden der JavaScript-Dateien warten.
+Da dies nur bei den öffentlich zugänglichen und statischen Seiten sinnvoll ist, werden nur diese Seiten prerendered.
+Diese Eigenschaft wird durch für jede Route händisch festgelegt (s. Codebeispiel~\ref{lst:prerender}, Zeile 3).
+
+\subsection{Render-Blocking Stylesheets}
+Die zweite Hürde, die für schnelles Rendering der Seite genommen wurde, ergibt sich aus der Reihenfolge, in der Dateien geladen und geparst werden.
+Das HTML wird top-down (dt.: von oben nach unten) geparst und die verlinkten Resourcen i.d.R. auch in dieser Reihenfolge geladen, bevor das Parsing und Rendering des HTML weiterläuft.
+Elemente und Ressourcen müssen daher explizit verzögert geladen werden.
+Bei JavaScript kann das entweder dadurch erreicht werden, dass Script-Tags ans Ende des HTML-Bodys gestellt oder mit dem defer-Attribut ausgezeichnet werden.
+Zweiteres wird in v01 automatisiert erledigt (s. Codebeispiel~\ref{lst:prerender}, Zeile 10).
+
+Bei Stylesheets (CSS) gibt es keine Möglichkeit, das verzögerte Laden so simpel umzusetzen.
+Stattdessen werden av Version v02 die Stylesheets mit dem Attribut \verb|rel="preload"| vorgeladen und nach dem Laden wird das Attribut auf \verb|rel="stylesheet"| geändert.
+Da d ganze Funktionalität auf JavaScript basiert, wird das Stylesheet zusätzlich in einem \verb|noscript|-Tag klassisch eingebunden (s. Codebeispiel~\ref{lst:stylesheets}). 
+Damit wird nicht die Ladereihenfolge der Ressourcen geändert, aber die Rendering-Engine wartet nicht mehr darauf, dass das Stylesheet geladen wurde, um das Rendering fortzusetzen.
+
+\begin{lstlisting}[language=html, caption={Entfernte Render-Blocking Stylesheets (\enquote{\$1} steht für den jeweiligen Quellpfad für das Stylesheet)}, label={lst:stylesheets}]
+<link rel="preload" href="$1" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="$1">
+</noscript>
+\end{lstlisting}
+
+Zur Optimierung des CSS gehört außerdem, dass externe Stylesheet nicht in den internen verwiesen werden, da das Laden derer sonst erst nach dem Parsen der internen Stylesheets beginnen würde.
+Stattdessen müssen alle externe Stylesheets bereits im HTML-Head verlinkt werden.
+In diesem Projekt tritt das nur auf das Laden der Roboto-Schriftart zu.
+Codebeispiel~\ref{lst:chained} zeigt, wie im Vue-Template das Stylesheet von Google-Servern verlinkt wird.
+Diese Verlinkung landet nach dem Build in den internen Stylesheets für das Template.
+Codebeispiel~\ref{lst:unchained} zeigt die Einbindung in die index.html ab Version v05, die im Build-Prozess automatisiert \enquote{unchained} eingebunden wird (s. Codebeispiel~\ref{lst:stylesheets}).
+
+\begin{lstlisting}[language=html, caption={Chained Request im Vue-Template}, label={lst:chained}]
+<style lang="scss">
+  @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+</style>
+\end{lstlisting}
+\begin{lstlisting}[language=html, caption={Un-Chained Request im HTML (index.html)}, label={lst:unchained}]
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+/>
+\end{lstlisting}
+
+\subsection{Bildoptimierung}
+Die Versionen v05 und v06 beinhalten hauptsächlich Optimierungen bezüglich der Bytegröße und der Pixelgröße der verwendeten Bilder.
+Bis v05 wurden alle Bilder als \verb|img|-Tag eingebunden und bis auf das Brand-Logo und ein Hintergrundbild (SVG) sind alle Bilder im WebP-Format in Originalgröße verlinkt.
+Die Darstellungsgröße dieser Bilder auf dem Bildschirm wurde bis dahin lediglich über CSS bestimmt.
+
+\begin{lstlisting}[language=html, caption={Einbindung von Bildern als picture-Tag}, label={lst:images}]
+<picture>
+  <source
+    :srcset="`${appleDevices_avif_1} 200w, ${appleDevices_avif_2} 783w,
+      ${appleDevices_avif_3} 1123w, ${appleDevices_avif} 1920w`"
+    sizes="(max-width: 768px) 100vw, 50vw"
+  />
+  <source
+    :srcset="`${appleDevices_webp_1} 200w, ${appleDevices_webp_2} 783w,
+      ${appleDevices_webp_3} 1123w, ${appleDevices_webp} 1920w`"
+    sizes="(max-width: 768px) 100vw, 50vw"
+  />
+  <img :src="appleDevices_webp" ... />
+</picture>
+\end{lstlisting}
+
+Das Codebeispiel~\ref{lst:images} zeigt die Einbindung von Bildern im \verb|picture|-Tag mit mehreren Bildgrößen und Bildformaten.
+Es wird davon ausgegangen, das jeder Browser heute entweder Bilder im AVIF-Format oder WebP darstellen kann.
+Aus diesem Grund werden zwei Sourcesets definiert, die jeweils die Bilder in 4 verschiedenen Breiten (200px, 780px, 1123px und 1920px) anbieten.
+Außerdem wird direkt im HTML mit angegeben, welche Breite das Bild im HTML haben wird (s. Zeilen 5 und 10), damit der Browser das passende Bild laden kann.
+
+Dadurch wird bewirkt, dass der Browser selbst entscheiden kann, welche Pixelgröße und welches Format geladen werden soll.
+Version v06 ändert die Verteilung der 4 Bildgrößen zu einer feineren und linearen Verteilung mit 6 Bildweiten: 320px, 640px, 960px, 1280px, 1600px und 1920px.
+Diese Bildgrößen passen zudem besser mit handelsüblichen Endgeräten zusammen, da die Bilder auf dieser Seite entweder 50\% oder 100\% der Bildschirmweite einnehmen.   
+
+\subsection{JS-Optimierungen}
+Für die Version v07 hat eine Untersuchung ergeben, dass ein sehr großer Teil des JavaScripts von Bootstrap-Icons eingenommen werden (s. Abbildung \colorbox{red}{??}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=.5]{images/v06_treemap.png}
+  \caption{Strukturkarte des JavaScripts in Version v06: 40\% des JavaScripts werden durch Bootstrap-Icons eingenommen.}
+  \label{fig:treemap}
+\end{figure}
+
+Aus diesem Grund wurde in v07 lediglich eine Änderung vorgenommen: Da sehr viele Bootstrap-Icons importiert werden, von denen aber nur wenige verwendet werden, werden jetzt lediglich die Icons importiert, die auf der Seite auch verwendet werden.
+Codebeispiel~\ref{lst:icons} zeigt, wie die Icons importiert und als Componenten registriert werden.
+
+\begin{lstlisting}[language=JavaScript, caption={Epliziter Import und Einbindung von Bootstrap-Icons}, label={lst:icons}]
+// vorher: alle Icons werden importiert und eingebunden
+// import { BootstrapVueIcons } from 'bootstrap-vue'
+// Vue.use(BootstrapVueIcons)
+
+import { BootstrapVue, BIconBoxArrowUpRight, BIconPerson, ... } from 'bootstrap-vue'
+Vue.component("b-icon-box-arrow-up-right", BIconBoxArrowUpRight)
+Vue.component("b-icon-person", BIconPerson)
+  ...
+\end{lstlisting}
+
+Diese Art von manuellem Treeshaking verringert die Größe des JavaScripts von Bootstrap auf die wirklich notwendigen Elemente.
+
+Außerdem haben erste Untersuchungen gezeigt, dass viel JavaScript geladen wird, das nicht verwendet wird.
+Deshalb wird in der Version v08 mit dem Optimieren der JS-Chunks experimentiert.
+Webpack bietet dafür bereits eine Möglichkeit an, die maximale Größe von JavaScript-Dateien festzulegen.
+Mithilfe dessen wird ein Maximum für die Dateigröße festgelegt und die Anzahl der generierten Chunks dynamisch festgelegt.
+Das Codebeispiel~\ref{lst:chunks} zeigt die Konfiguration für diese Optimierung.
+
+\begin{lstlisting}[language=JavaScript, caption={Konfiguration von Webpack zur Limitierung der Chunkgröße}, label={lst:chunks}]
+configureWebpack: (config) => {
+  config.optimization = {
+    runtimeChunk: 'single',
+    splitChunks: {chunks: 'all', maxInitialRequests: Infinity, maxSize: 500000}
+  }
+}
+\end{lstlisting}
+
+\subsection{Timing}
+Diese letzte Rubrik an Optimierungsschritten umfasst das Experimentieren mit dem Timing der Darstellung von Elementen.
+Die Version v09 entfernt alle Animationen von der Startseite, die mittels des NPM-Pakets \enquote{Animate On Scroll} (AOS), Elemente erst erscheinen lässt, wenn sie in der Ansicht des Nutzers auftauchen.
+Die Versionen v10 und v11 fügt zu \verb|img|-Tags das Attribut \verb|loading="lazy"| hinzu.
+Lazy-Loading bedeutet, dass die Bilder erst geladen werden, wenn der Client für nötig erachtet, beispielsweise wenn das Bild kurz außerhalb der Ansicht des Nutzers ist und vielleicht gleich in die Ansicht gescrollt wird.
+
+\section{Experimente und Analyse}\label{sec:experimente}
+Um die Versionen zu testen, wurden alle Versionen als eigenen Dockerimage erstellt und auf demselben Host als getrennte Dockercontainer deployt.
+Anschließend wurder NGINX-Proxy-Manager so konfiguriert das die Container unter der jeweiligen Versionsnummer online erreichbar sind.
+Somit ist beispielweise die Version v00 unter \href{https://v00.leto.andreasnicklaus.de}{v00.leto.andreasnicklaus.de} erreichbar.
+
+So konnten alle Versionen mit WebPageTest getestet und miteinander verglichen werden.
 
 \subsection{Testergebnisse}
+Tabelle~\ref{tab:versionen} zeigt die rohen Ergebnisse aus den mit WebPageTest ausgeführten Tests.
+
+% TODO: Graphen aus der Präsi
+\begin{figure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=.8\linewidth]{images/v06_treemap.png}
+    \caption{1a}
+    \label{fig:sfig1}
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=.8\linewidth]{images/v06_treemap.png}
+    \caption{1b}
+    \label{fig:sfig2}
+  \end{subfigure}
+  \caption{plots of....}
+  \label{fig:fig}
+  \end{figure}
+
 \subsection{Interpretation}
-
+% TODO: wodurch sind in den Versionen Verbeserungen aufgetreten?
 \section{Fazit}
+% Ergebniszusammenfassung & Ausblick
+% TODO: CSS Pruning, Automatisiertes Treeshaking, "Minimize main thread work", Preloading LCP-Bild, Effizienteres Caching mit CDN, Größere Bildversionen für große Bildschirme
 
+\appendix
+
+\section{Tabellen}
+
+\begin{table}[h]
+  \begin{tabular}{|l|l|}
+    \hline
+    Versionsbezeichnung & Änderungsbeschreibung\\
+    \hline
+    v00 & -- (Ursprungsversion vor Projektbeginn)\\
+    \hline
+    v01 & Prerendering für statische Seiten\\
+    \hline
+    v02 & Render-Blocking Stylesheets entfernt\\
+    \hline
+    v03 & Updated Docker Build Workflow\\
+    \hline
+    v04 & Verbessertes Access Management\\
+    \hline
+    v05 & AVIF-Bilder, Chained Request für Fonts entfernt\\
+    \hline
+    v06 & Lineare Verteilung der Bildgrößen\\
+    \hline
+    v07 & Import nur der genutzten Icons anstelle von allen\\
+    \hline
+    v08 & JS-Chunks gesplittet\\
+    \hline
+    v09 & Animationen entfernt\\
+    \hline
+    v10 & Alle Bilder werden lazy-loaded\\
+    \hline
+    v11 & Zuerst sichtbare SVGs werden lazy-loaded\\
+    \hline
+  \end{tabular}
+  \caption{Versionsnummerierungen und die Änderungen, die in der Version neu hinzugekommen sind. Hinweis: Versionen v03 und v04 haben inhaltliche Änderungen an der Webseite, beinhalten aber keinen Performanceoptimierungsschritt.}\label{tab:versionen}
+\end{table}
+
+\begin{landscape}
+\begin{table}[h]
+  \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|}
+    \hline
+    Version & Page Weight (KB) & WPT LCP (ms) & WPT SI (ms) & LH Score & FCP (ms) & LCP (ms) & SI (ms) & TTI (ms) & CLS \\
+    \hline
+    v00 & 2789 KB & 4736 ms & 5970 ms & 33 & 4600 ms & 5200 ms & 7500 ms & 4600 ms & 0,751 \\
+    \hline
+    v01 & 2737 KB & 2964 ms & 4368 ms & 57 & 3300 ms & 3300 ms & 5100 ms & 14500 ms & 0 \\ % TODO: check CLS
+    \hline
+    v02 & 2780 KB & 1877 ms & 2936 ms & 45 & 900 ms & 2600 ms & 5500 ms & 10400 ms & 0,936 \\
+    \hline
+    v03 & 2737 KB & 1888 ms & 6297 ms & 40 & 900 ms & 2300 ms & 5600 ms & 14700 ms & 0,936 \\
+    \hline
+    v04 & 2738 KB & 1804 ms & 6019 ms & 46 & 900 ms & 2400 ms & 4100 ms & 13300 ms & 0,936 \\
+    \hline
+    v05 & 1140 KB & 1891 ms & 2813 ms & 51 & 900 ms & 2500 ms & 2500 ms & 6100 ms & 0,78 \\
+    \hline
+    v06 & 778 KB & 1898 ms & 2957 ms & 49 & 900 ms & 2500 ms & 3200 ms & 4900 ms & 0,781 \\
+    \hline
+    v07 & 612 KB & 1896 ms & 2930 ms & 52 & 900 ms & 2500 ms & 3200 ms & 3900 ms & 0,781 \\
+    \hline
+    v08 & 628 KB & 2029 ms & 2306 ms & 54 & 900 ms & 2500 ms & 2700 ms & 4100 ms & 0,78 \\
+    \hline
+    v09 & 627 KB & 2189 ms & 2068 ms & 54 & 900 ms & 2500 ms & 2600 ms & 4100 ms & 0,78 \\
+    \hline
+    v10 & 628 KB & 2243 ms & 2125 ms & 44 & 900 ms & 4100 ms & 3900 ms & 3900 ms & 0,781 \\ % TODO: check Score, LCP und SI
+    \hline
+    v11 & 627 KB & 2218 ms & 2122 ms & 54 & 900 ms & 2600 ms & 2500 ms & 4000 ms & 0,78 \\
+    \hline
+  \end{tabular}
+  \caption{Rohergebnisse der WebPageTest-Ergebnisse pro Version}\label{tab:versionen}
+\end{table}
+\end{landscape}
+  
 \end{document}

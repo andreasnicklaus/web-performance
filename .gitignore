@@ -1,4 +1,2 @@
 *.html
-paper/**
-!paper/Hausarbeit.tex
-!paper/Hausarbeit.bib
+paper/out
