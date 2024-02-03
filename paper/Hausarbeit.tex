@@ -66,6 +66,8 @@
 \usepackage{subcaption}
 \usepackage{lscape}
 
+\usepackage{multicol}
+
 \title{Optimierung einer VueJS-Webseite}
 \author{Andreas Nicklaus}
 
@@ -82,8 +84,8 @@ Die Webseite in diesem Projekt ist eine Marketingwebseite für das Onlinetool f�
 Die Webseite ist strikt getrennt von der Anwendung, umfasst aber mehrere Admin-Tools und die Nutzerkontenverwaltung.
 Die Kommunikation mit dem Backend-Server erfolgt über HTTP und ist für dieses Projekt nahezu vollkommen irrelevant.
 
-Gehostet wird die Webseite auf eine kostenlosen und minimal ausgestatteten AWS EC2 Instanz und mithilfe von Docker.
-Auf der Host-Maschine läuft zusätzlich auf Docker ein NGINX-Proxy-Manager Container, der die Requests mittels der Domain \enquote{leto.andreasnicklaus.de} an den richtigen Container weiterleitet.
+Gehostet wird die Webseite auf einer kostenlosen und minimal ausgestatteten AWS EC2 Instanz und mithilfe von Docker.
+Auf der Host-Maschine läuft zusätzlich auf Docker ein NGINX-Proxy-Manager Container, der die Requests über die Domain \enquote{leto.andreasnicklaus.de} an den richtigen Container weiterleitet.
 Die Erstellung des Docker-Images erfolgt automatisiert in Github Actions und hat folgende relevante Build-Schritte:
 
 \begin{enumerate}
@@ -92,18 +94,17 @@ Die Erstellung des Docker-Images erfolgt automatisiert in Github Actions und hat
   \item Bauen der Webseite mittels \verb|npm run build|
   \item Wechseln auf NGINX-alpine Docker Image
   \item Kopieren der NGINX-Konfigurationsdatei
-  \item Kopieren der gebauten Webseite
-  \item Starten des NGINX-Servers
+  \item Kopieren der gebauten Webseite auf den NGINX-Webserver
 \end{enumerate}
 
 Auf der Grundlage dieser Webseite, Entwicklungsumgebung und dieses Deployments werden im Folgenden Schwachstellen gesucht, Verbesserungsmöglichkeiten umrissen, deren Umsetzung beschrieben und Effekt ausgewertet.
-Zielsetzung dabei ist es, die Performance der Webseite im Allgemeinen zu verbessern, ohne den Aufwand für die Weiterentwicklung zu vergrößern oder die Größe des Dockerimages und somit der Speicheranforderungen and den Webserver zu vergrößern.
+Zielsetzung dabei ist es, die Performance der Webseite im Allgemeinen zu verbessern, ohne den Aufwand für die Weiterentwicklung zu vergrößern oder die Größe des Dockerimages und somit der Speicheranforderungen an den Webserver zu vergrößern.
 
 \section{Testfall und Tools}
-Um die Performance der Webseite sowie den Effekt der Verbesserungsversuche zu bewerten, werden in diesem Kapitel genutzte Testtools und die beachteten Metriken beschrieben.
+Um die Performance der Webseite sowie den Effekt der Verbesserungsversuche zu bewerten, werden in diesem Kapitel die genutzten Testtools und die beachteten Metriken beschrieben.
 
 \subsection{Tool A: WebPageTest}\label{subsec:WebPageTest}
-Das erste Tool, das zur Auswertung der Performance genutzt wurde, ist das Onlinetool WebPageTest, das unter der URL \href{https://www.webpagetest.org}{www.webpagetest.org} erreichbar ist.
+Das erste Tool, das zur Auswertung der Performance genutzt wurde, ist das Onlinetool WebPageTest, das unter \href{https://www.webpagetest.org}{www.webpagetest.org} erreichbar ist.
 WebPageTest wurde von Patrick Meenan als internes Evaluationswerkzeug für AOL entwickelt und ist sein 2008 frei verfügbar.
 
 Mithilfe von WebPageTest können Ladezeiten, Verarbeitungsperformance und weitere Vergleichsmaßstäbe festgehalten, bzw. erstellt werden.
@@ -111,7 +112,7 @@ Dabei wird hoher Wert darauf gelegt, den Programm- und Datenflow des Clients zu 
 Der größte Faktor, der für die Verwendung in diesem Projekt ausschlaggebend war, ist die Tatsache, dass jeder Test eine eindeutige ID hat, mit der die Testergebnisse nachvollziehbar gespeichert werden und mit der mehrere Tests miteinander verglichen werden können.
 
 Zusätzlich bietet das Tool die Möglichkeit, optional bei Tests einen Lighthousetest (s. \hyperref[subsec:Lighthouse]{Lighthouse Chrome Extension} und \hyperref[subsec:PageSpeed]{PageSpeed Insights}) und einen Carbon Control Test mitlaufen zu lassen, der den Kohlenstoffausstoß des Seitenaufrufs abschätzt.
-Außerdem werden weitere hilfreiche Tools wie ein Bildanalysetool vom selben Anbieter, eine Request-Map und ein Sicherheitscheck von Snyk direkt verlinkt.
+Außerdem werden weitere hilfreiche Tools wie ein Bildanalysetool, eine Request-Map und ein Sicherheitscheck direkt verlinkt.
 Im Rahmen dieser Arbeit werden lediglich die integrierten Ladeanalysen, der integrierte Lighthouse Report, die Ladezeitvisualisierung \enquote{Filmstrip}, der \enquote{Content Breakdown} und das externe Bildanalysetool verwendet.
 
 \subsection{Tool B: PageSpeed Insights}\label{subsec:PageSpeed}
@@ -140,12 +141,9 @@ Im Rahmen dieser Arbeit wird PageSpeed Insights lediglich verwendet, um einen Ve
 \subsection{Tool C: Lighthouse Chrome Extension}\label{subsec:Lighthouse}
 Die Google Chrome Extension \href{https://chromewebstore.google.com/detail/lighthouse/blipmdconlkpinefehnmjammfjpmpbjk}{Lighthouse} ist eine Erweiterung für den Browser Google Chrome und wurde von Google entwickelt.
 Mit dessen Hilfe können Lighthouse Reports lokal für im Browser geöffnete Seiten erstellt werden und bereits in der Entwicklungsphase manuell generiert werden.
-
 Die Auswertungen sind dabei dieselben wie bei \hyperref[subsec:WebPageTest]{WebPageTest} und \hyperref[subsec:PageSpeed]{PageSpeed Insights}.
-Allerdings sind die Ladezeiten hier oft geringer, weil die Seite bereits einmal geladen wurde und somit viele Ressourcen gecached werden können.
-Bei der Auswertung von lokalen Seiten in der Entwicklungsphase sind die Ladezeiten kürzer, weil Ressourcen bloß von der eigenen Maschine geladen werden müssen.
 
-Ebenso wie PageSpeed Insights wird die Lighthouse Chrome Extension im Rahmen dieser Arbeit bloß verwendet, um einen weiteren Vergleichswert für den Performance-Score zu bekommen.
+Ebenso wie PageSpeed Insights wird die Lighthouse Chrome Extension im Rahmen dieser Arbeit bloß verwendet, um einen weiteren Vergleichswert für den Performance-Score zu bekommen und um bei der Entwicklung die Verbesserungen zu testen.
 
 \subsection{Metriken und Maße}
 Für die Evaluierung der Testergebnisse durch die oben genannten Tools wurden die vielen Messwerte reduziert auf 9 Metriken, deren Entwicklung während des Optimierungsprozesses hier interessant sind.
@@ -160,17 +158,17 @@ Die folgenden Unterkapitel beschreiben die Versionsschritte und die Webseitbesta
 Im Folgekaptitel~\ref{sec:experimente} wird beschrieben, wie die Versionen ausgewertet und welche Performanceverbesserungen dadurch erzielt wurden.
 
 \subsection{Prerendering}
-Die Version v01 führt als ersten Schritt ein, dass die Seiten prerendered werden.
+Die Version v01 führt als ersten Schritt ein, dass die Seiten vorgerendert werden.
 Mit Vue wird usprünglich ein HTML-Skelett geladen, dass mittels JavaScript mit Inhalten gefüllt wird.
 Deshalb muss der Browser in diesem Prozess erst das HTML-Skelett laden, anschließend den verlinkten JavaScript-Chunk-Vendor laden, der auf die relevanten JavaScript- und CSS-Dateien verweist.
-Erst, wenn all diese Dateien geladen werden, kann der Browser die Seite laden.
-Das ist sehr effizient, weil das initiale HTML sehr klein ist und das Navigieren zwischen Seiten weniger Ladeaufwand hat.
+Erst, wenn all diese Dateien geladen werden, kann der Browser die Seite rendern.
+Das ist oft effizient, weil das initiale HTML sehr klein ist und das Navigieren zwischen Seiten weniger Ladeaufwand hat.
 Dieses Verfahren ist lediglich beim ersten Laden der Seite aufwendig, weil viele Dateien in sog. Chained Requests geladen werden.
 
-Im Prerendering werden die Vue-Templates, die mittels Vue-Router einem Pfad zugewiesen werden, einmalig im Build-Prozess der Seite zusammengefügt und gerendered.
-So kann das HTML, das im allerersten Request empfangen wird gleich mit Inhalten gefüllt werden, die im Browser sofort gerendered werden.
+Im Prerendering werden die Vue-Templates, die mittels Vue-Router einem Pfad zugewiesen werden, einmalig im Build-Prozess der Seite zusammengefügt und gerendert.
+So kann das HTML, das im allerersten Request empfangen wird gleich mit Inhalten gefüllt werden, die im Browser sofort gerendert werden.
 
-\begin{lstlisting}[language=JavaScript, caption={Implementierung des Single Page Prerenderings mithilfe des PrerenderSpaPlugins}, label={lst:prerender}]
+\begin{lstlisting}[language=JavaScript, caption={Implementierung des Single Page Prerenderings}, label={lst:prerender}]
 new PrerenderSpaPlugin({
   staticDir: path.join(__dirname, 'dist'),
   routes: routes.filter(r => r.meta?.prerender).map(r => r.path),
@@ -186,19 +184,16 @@ new PrerenderSpaPlugin({
     return renderedRoute;
   }
 })
-
-// im Vue-Template:
-// <div id="HomeView" data-view>
 \end{lstlisting}
 
 Das Codebeispiel~\ref{lst:prerender} zeigt die Implementierung mithilfe des NPM-Packages PrerenderSpaPlugin.
 Das Plugin nutzt den PuppeteerRenderer, der in einem Headless Chrome, die Seite öffnet und rendert.
 Sobald ein HTML-Element mit dem Attribut \enquote{data-view} vorhanden ist, speichert das Plugin das HTML der Seite ab.
-Deshalb muss das Vue-Template der View das Attribut data-view bekommen.
+Deshalb muss das Vue-Template der View das Attribut \verb|data-view| bekommen.
 
-Zusätzlich wurde in diesem Schritt jedes verlinkte Skript mit dem Attribut \enquote{defer} versehen, damit es dem Rendering nicht im Weg steht, und die App als prerendered annotiert. 
-Durch diesen Schritt können alle statischen Inhalte sofort nach Laden und Parsen des HTML gerendered werden und die Rendering-Engine muss nicht auf das Laden der JavaScript-Dateien warten.
-Da dies nur bei den öffentlich zugänglichen und statischen Seiten sinnvoll ist, werden nur diese Seiten prerendered.
+Zusätzlich wurde in diesem Schritt jedes verlinkte Skript mit dem Attribut \enquote{defer} versehen, damit es dem Rendering nicht im Weg steht, und die App wird als prerendered annotiert. 
+Durch diesen Schritt können alle statischen Inhalte sofort nach Laden und Parsen des HTML gerendert werden und die Rendering-Engine muss nicht auf das Laden der JavaScript-Dateien warten.
+Da dies nur bei den öffentlich zugänglichen und statischen Seiten sinnvoll ist, werden nur diese Seiten vorgerendert.
 Diese Eigenschaft wird durch für jede Route händisch festgelegt (s. Codebeispiel~\ref{lst:prerender}, Zeile 3).
 
 \subsection{Render-Blocking Stylesheets}
@@ -209,8 +204,8 @@ Bei JavaScript kann das entweder dadurch erreicht werden, dass Script-Tags ans E
 Zweiteres wird in v01 automatisiert erledigt (s. Codebeispiel~\ref{lst:prerender}, Zeile 10).
 
 Bei Stylesheets (CSS) gibt es keine Möglichkeit, das verzögerte Laden so simpel umzusetzen.
-Stattdessen werden av Version v02 die Stylesheets mit dem Attribut \verb|rel="preload"| vorgeladen und nach dem Laden wird das Attribut auf \verb|rel="stylesheet"| geändert.
-Da d ganze Funktionalität auf JavaScript basiert, wird das Stylesheet zusätzlich in einem \verb|noscript|-Tag klassisch eingebunden (s. Codebeispiel~\ref{lst:stylesheets}). 
+Stattdessen werden ab Version v02 die Stylesheets mit dem Attribut \verb|rel="preload"| vorgeladen und nach dem Laden wird das Attribut auf \verb|rel="stylesheet"| geändert.
+Da diese Funktionalität auf JavaScript basiert, wird das Stylesheet zusätzlich in einem \verb|noscript|-Tag klassisch eingebunden (s. Codebeispiel~\ref{lst:stylesheets}). 
 Damit wird nicht die Ladereihenfolge der Ressourcen geändert, aber die Rendering-Engine wartet nicht mehr darauf, dass das Stylesheet geladen wurde, um das Rendering fortzusetzen.
 
 \begin{lstlisting}[language=html, caption={Entfernte Render-Blocking Stylesheets (\enquote{\$1} steht für den jeweiligen Quellpfad für das Stylesheet)}, label={lst:stylesheets}]
@@ -221,7 +216,7 @@ Damit wird nicht die Ladereihenfolge der Ressourcen geändert, aber die Renderin
 \end{lstlisting}
 
 Zur Optimierung des CSS gehört außerdem, dass externe Stylesheet nicht in den internen verwiesen werden, da das Laden derer sonst erst nach dem Parsen der internen Stylesheets beginnen würde.
-Stattdessen müssen alle externe Stylesheets bereits im HTML-Head verlinkt werden.
+Stattdessen müssen alle externen Stylesheets bereits im HTML-Head verlinkt werden.
 In diesem Projekt tritt das nur auf das Laden der Roboto-Schriftart zu.
 Codebeispiel~\ref{lst:chained} zeigt, wie im Vue-Template das Stylesheet von Google-Servern verlinkt wird.
 Diese Verlinkung landet nach dem Build in den internen Stylesheets für das Template.
@@ -232,14 +227,14 @@ Codebeispiel~\ref{lst:unchained} zeigt die Einbindung in die index.html ab Versi
   @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
 </style>
 \end{lstlisting}
-\begin{lstlisting}[language=html, caption={Un-Chained Request im HTML (index.html)}, label={lst:unchained}]
+\begin{lstlisting}[language=html, caption={\enquote{Un-Chained} Request im HTML (index.html)}, label={lst:unchained}]
 <link
   rel="stylesheet"
   href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
 />
 \end{lstlisting}
 
-\subsection{Bildoptimierung}
+\subsection{Bildoptimierung}\label{subsec:images}
 Die Versionen v05 und v06 beinhalten hauptsächlich Optimierungen bezüglich der Bytegröße und der Pixelgröße der verwendeten Bilder.
 Bis v05 wurden alle Bilder als \verb|img|-Tag eingebunden und bis auf das Brand-Logo und ein Hintergrundbild (SVG) sind alle Bilder im WebP-Format in Originalgröße verlinkt.
 Die Darstellungsgröße dieser Bilder auf dem Bildschirm wurde bis dahin lediglich über CSS bestimmt.
@@ -270,7 +265,7 @@ Version v06 ändert die Verteilung der 4 Bildgrößen zu einer feineren und line
 Diese Bildgrößen passen zudem besser mit handelsüblichen Endgeräten zusammen, da die Bilder auf dieser Seite entweder 50\% oder 100\% der Bildschirmweite einnehmen.   
 
 \subsection{JS-Optimierungen}
-Für die Version v07 hat eine Untersuchung ergeben, dass ein sehr großer Teil des JavaScripts von Bootstrap-Icons eingenommen werden (s. Abbildung \colorbox{red}{??}).
+Für die Version v07 hat eine Untersuchung ergeben, dass ein sehr großer Teil des JavaScripts von Bootstrap-Icons eingenommen werden (s. Abbildung \ref{fig:treemap}).
 
 \begin{figure}[h]
   \centering
@@ -312,46 +307,94 @@ configureWebpack: (config) => {
 
 \subsection{Timing}
 Diese letzte Rubrik an Optimierungsschritten umfasst das Experimentieren mit dem Timing der Darstellung von Elementen.
-Die Version v09 entfernt alle Animationen von der Startseite, die mittels des NPM-Pakets \enquote{Animate On Scroll} (AOS), Elemente erst erscheinen lässt, wenn sie in der Ansicht des Nutzers auftauchen.
+Die Version v09 entfernt alle Animationen von der Startseite, die mittels des NPM-Pakets \enquote{Animate On Scroll} (AOS) Elemente erst erscheinen lässt, wenn sie in der Ansicht des Nutzers auftauchen.
 Die Versionen v10 und v11 fügt zu \verb|img|-Tags das Attribut \verb|loading="lazy"| hinzu.
 Lazy-Loading bedeutet, dass die Bilder erst geladen werden, wenn der Client für nötig erachtet, beispielsweise wenn das Bild kurz außerhalb der Ansicht des Nutzers ist und vielleicht gleich in die Ansicht gescrollt wird.
 
 \section{Experimente und Analyse}\label{sec:experimente}
 Um die Versionen zu testen, wurden alle Versionen als eigenen Dockerimage erstellt und auf demselben Host als getrennte Dockercontainer deployt.
-Anschließend wurder NGINX-Proxy-Manager so konfiguriert das die Container unter der jeweiligen Versionsnummer online erreichbar sind.
+Anschließend wurde der NGINX-Proxy-Manager so konfiguriert das die Container unter der jeweiligen Versionsnummer online erreichbar sind.
 Somit ist beispielweise die Version v00 unter \href{https://v00.leto.andreasnicklaus.de}{v00.leto.andreasnicklaus.de} erreichbar.
 
 So konnten alle Versionen mit WebPageTest getestet und miteinander verglichen werden.
 
 \subsection{Testergebnisse}
 Tabelle~\ref{tab:versionen} zeigt die rohen Ergebnisse aus den mit WebPageTest ausgeführten Tests.
+Dabei ist auffällig, dass das Prerendering der Version v01 direkt Verbesserungen allen Messwerten außer der Page Weight und der TTI bringt.
+Ebenso positiv auffällig ist das Einführen von Bilder im AVIF-Format und den Responsive Image Sizes in der Version v05, die insbesondere Verbesserungen im SI, der Page Weight (s. Abbildung~\ref{fig:PageWeight}) und der TTI (s. Abbildung~\ref{fig:TTI}) gebracht haben.
 
-% TODO: Graphen aus der Präsi
-\begin{figure}
+Hinweis: Da die Tests mit allen Tools starken Schwankungen bis zu 20\% unterliegen, sind kleine Verschlechterungen oder Verbesserungen in einzelnen Versionen nicht zu beachten, wenn die Veränderung nicht in den Folgeversionen Bestand behält.
+
+\begin{figure}[h]
   \begin{subfigure}{.5\textwidth}
     \centering
-    \includegraphics[width=.8\linewidth]{images/v06_treemap.png}
-    \caption{1a}
-    \label{fig:sfig1}
+    \includegraphics[width=.8\linewidth]{images/PageWeight.png}
+    \caption{Page Weight der Startseite pro Version in kB}
+    \label{fig:PageWeight}
   \end{subfigure}%
   \begin{subfigure}{.5\textwidth}
     \centering
-    \includegraphics[width=.8\linewidth]{images/v06_treemap.png}
-    \caption{1b}
-    \label{fig:sfig2}
+    \includegraphics[width=.8\linewidth]{images/LCP.png}
+    \caption{LCP der Startseite in Sekunden}
+    \label{fig:LCP}
   \end{subfigure}
-  \caption{plots of....}
-  \label{fig:fig}
-  \end{figure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=.8\linewidth]{images/LH Score.png}
+    \caption{Lighthouse Performance Score der Startseite}
+    \label{fig:LHScore}
+  \end{subfigure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=.8\linewidth]{images/TTI.png}
+    \caption{TTI der Startseite in Sekunden}
+    \label{fig:TTI}
+  \end{subfigure}
+  \caption{Performance der Startseite je Version}
+  \label{fig:performance}
+\end{figure}
 
 \subsection{Interpretation}
-% TODO: wodurch sind in den Versionen Verbeserungen aufgetreten?
+Die Abbildung~\ref{fig:content} vergleicht die Größe der Seite nach Dateityp vor dem Projekt (v00) und nach dem Projekt (v11).
+Die Seitengröße von 2789 kB auf 627 kB (-77,5\%) reduziert (vgl. Abbildung~\ref{fig:PageWeight}).
+2063 kB der eingesparten 2162 kB wurden alleine durch die Verkleinerung der Bilder eingespart (von ca. 2100 kB auf 35,8 kB für Bilder).
+Daraus lässt sich zumindest für dieses Projekt darauf schließen, dass das Laden der Bilder für die Seitengröße das größte Potenzial für Verbesserungen hatte.
+
+Ebenso können wir beobachten, dass das Prerendering der statischen Seiten das HTML zwar um ca. 17 kB vergrößert, aber den FCP, die Ladzeiten für verlinkte Ressourcen (LCP und SI) und dadurch den Lighthouse Performance Score beachtlich verbessert.
+Diese zwei Optimierungsschritte haben sich als sehr gute Optimierungsschritte herausgestellt.
+
+\begin{figure}[h]
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=.8\linewidth]{images/v00_content.png}
+    \caption{Version v00}
+    \label{fig:v00content}
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=.8\linewidth]{images/v11_content.png}
+    \caption{Version v11}
+    \label{fig:v11content}
+  \end{subfigure}
+  \caption{Vergleich der Dateitypen bzgl. der unkomprimierten Bytegröße zwischen den Versionen v00 und v11}
+  \label{fig:content}
+\end{figure}
+
 \section{Fazit}
-% Ergebniszusammenfassung & Ausblick
-% TODO: CSS Pruning, Automatisiertes Treeshaking, "Minimize main thread work", Preloading LCP-Bild, Effizienteres Caching mit CDN, Größere Bildversionen für große Bildschirme
+Das Projekt hat gezeigt, dass sich die Optimierung einer VueJS-Webseite von der Optimierung einer statischen Webseite nur in einem Punkt unterscheidet: Die Verbesserung des Nutzererlebnisses, das sich durch Single-Page-Applications ergibt, schadet der Performance beim ersten Laden der Seite durch Chained Requests.
+Dieser Unterschied lässt sich durch Prerendering weitestgehend ausbessern und erlaubt es Entwicklern, weitere Schritte oder Kontrollen des Build-Prozesses zu automatisieren.
+
+Diese automatisierten Schritte unterscheiden sich von der Optimierung einer statischen HTML-Seite nicht.
+In diesem Beispielfall haben das Entfernen von ungebrauchtem JavaScript und die Bildoptimierung neben dem Prerendering die besten Ergebnisse erzielt.
+
+Um dieses Projekt weiterzuführen, lassen sich mehrere Punkte abzeichnen, die sich sowohl aus dem Lighthouse Report als auch aus Image Lintern ergeben.
+Das Treeshaking, das sich durch das manuelle Entfernen von ungenutztem JavaScript als erfolgreich herausgestellt hat, könnte man noch weiter optimieren und auf das Entfernen von ungenutztem CSS, sog. \enquote{CSS-Pruning}, und das Trennen von nach dem Laden ausgeführten JavaScript ausweiten.
+Ebenso müsste das Potenzial von Preloading der LCP-Ressource genauer untersucht werden sowie der Performance-Unterschied von unterschiedlichen Hostingarchitekturen und -konfigurationen.
+Als letzter Punkt wäre ein interessantes Projekt der Umgang mit Bildern, die im Original in einer kleinen Größe vorliegen, aber auf großen Bildschirmen eine hohe Auflösung haben sollen.
+
+Insgesamt ist das Projekt ein Erfolg, da die Rahmenbedingungen bzgl. Speicherplatz und Rechenleistung eingehalten wurden, die Performance verbessert wurde und die Ladezeiten aufgrund geringerer Page Weight deutlich verringert wurden.
 
 \appendix
-
 \section{Tabellen}
 
 \begin{table}[h]
@@ -391,35 +434,45 @@ Tabelle~\ref{tab:versionen} zeigt die rohen Ergebnisse aus den mit WebPageTest a
 \begin{table}[h]
   \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|}
     \hline
-    Version & Page Weight (KB) & WPT LCP (ms) & WPT SI (ms) & LH Score & FCP (ms) & LCP (ms) & SI (ms) & TTI (ms) & CLS \\
+    Version & Page Weight (kB) & WPT LCP (ms) & WPT SI (ms) & LH Score & FCP (ms) & LCP (ms) & SI (ms) & TTI (ms) & CLS \\
     \hline
-    v00 & 2789 KB & 4736 ms & 5970 ms & 33 & 4600 ms & 5200 ms & 7500 ms & 4600 ms & 0,751 \\
+    v00 & 2789 kB & 4736 ms & 5970 ms & 33 & 4600 ms & 5200 ms & 7500 ms & 4600 ms & 0,751 \\
     \hline
-    v01 & 2737 KB & 2964 ms & 4368 ms & 57 & 3300 ms & 3300 ms & 5100 ms & 14500 ms & 0 \\ % TODO: check CLS
+    v01 & 2737 kB & 2964 ms & 4368 ms & 57 & 3300 ms & 3300 ms & 5100 ms & 14500 ms & 0 \\
     \hline
-    v02 & 2780 KB & 1877 ms & 2936 ms & 45 & 900 ms & 2600 ms & 5500 ms & 10400 ms & 0,936 \\
+    v02 & 2780 kB & 1877 ms & 2936 ms & 45 & 900 ms & 2600 ms & 5500 ms & 10400 ms & 0,936 \\
     \hline
-    v03 & 2737 KB & 1888 ms & 6297 ms & 40 & 900 ms & 2300 ms & 5600 ms & 14700 ms & 0,936 \\
+    v03 & 2737 kB & 1888 ms & 6297 ms & 40 & 900 ms & 2300 ms & 5600 ms & 14700 ms & 0,936 \\
     \hline
-    v04 & 2738 KB & 1804 ms & 6019 ms & 46 & 900 ms & 2400 ms & 4100 ms & 13300 ms & 0,936 \\
+    v04 & 2738 kB & 1804 ms & 6019 ms & 46 & 900 ms & 2400 ms & 4100 ms & 13300 ms & 0,936 \\
     \hline
-    v05 & 1140 KB & 1891 ms & 2813 ms & 51 & 900 ms & 2500 ms & 2500 ms & 6100 ms & 0,78 \\
+    v05 & 1140 kB & 1891 ms & 2813 ms & 51 & 900 ms & 2500 ms & 2500 ms & 6100 ms & 0,78 \\
     \hline
-    v06 & 778 KB & 1898 ms & 2957 ms & 49 & 900 ms & 2500 ms & 3200 ms & 4900 ms & 0,781 \\
+    v06 & 778 kB & 1898 ms & 2957 ms & 49 & 900 ms & 2500 ms & 3200 ms & 4900 ms & 0,781 \\
     \hline
-    v07 & 612 KB & 1896 ms & 2930 ms & 52 & 900 ms & 2500 ms & 3200 ms & 3900 ms & 0,781 \\
+    v07 & 612 kB & 1896 ms & 2930 ms & 52 & 900 ms & 2500 ms & 3200 ms & 3900 ms & 0,781 \\
     \hline
-    v08 & 628 KB & 2029 ms & 2306 ms & 54 & 900 ms & 2500 ms & 2700 ms & 4100 ms & 0,78 \\
+    v08 & 628 kB & 2029 ms & 2306 ms & 54 & 900 ms & 2500 ms & 2700 ms & 4100 ms & 0,78 \\
     \hline
-    v09 & 627 KB & 2189 ms & 2068 ms & 54 & 900 ms & 2500 ms & 2600 ms & 4100 ms & 0,78 \\
+    v09 & 627 kB & 2189 ms & 2068 ms & 54 & 900 ms & 2500 ms & 2600 ms & 4100 ms & 0,78 \\
     \hline
-    v10 & 628 KB & 2243 ms & 2125 ms & 44 & 900 ms & 4100 ms & 3900 ms & 3900 ms & 0,781 \\ % TODO: check Score, LCP und SI
+    v10 & 649 kB & 2342 ms & 2165 ms & 53 & 900 ms & 2600 ms & 2500 ms & 4000 ms & 0,78 \\
     \hline
-    v11 & 627 KB & 2218 ms & 2122 ms & 54 & 900 ms & 2600 ms & 2500 ms & 4000 ms & 0,78 \\
+    v11 & 627 kB & 2218 ms & 2122 ms & 54 & 900 ms & 2600 ms & 2500 ms & 4000 ms & 0,78 \\
     \hline
   \end{tabular}
-  \caption{Rohergebnisse der WebPageTest-Ergebnisse pro Version}\label{tab:versionen}
+  \caption{Rohergebnisse der WebPageTest-Ergebnisse pro Version. Hinweis: Die rohen Werte unterliegen bei mehrfacherer Testausführung starken Schwankungen (bis zu 20\% in beide Richtungen).}\label{tab:versionen}
 \end{table}
+
+\section*{Was sonst keine Platz gefunden hat: Bilddateigrößen und Bildformate}
+\begin{multicols}{2}
+  Neben den in dieser Arbeit beschriebenen Optimierungsergebnissen wurde eine weitere Beobachtung gemacht, die sonst keinen Platz gefunden hätte.
+  Bei der Untersuchung von Dateigrößen im Vergleich zur Pixelgröße ist aufgefallen, dass sich WebP und AVIF unterschiedlich verhalten, wenn die Pixelgröße verändert wird.
+  \href{https://quickchart.io/chart?w=400&h=400&c=%7B%0A%20%20type%3A%20%27line%27%2C%0A%20%20data%3A%20%7B%0A%20%20%20%20labels%3A%20%5B%0A%20%20%20%20%20%20%27Original%20(1900%20px)%27%2C%0A%20%20%20%20%20%20%27%401%20(1600%20px)%27%2C%0A%20%20%20%20%20%20%27%402%20(1280%20px)%27%2C%0A%20%20%20%20%20%20%27%403%20(960%20px)%27%2C%0A%20%20%20%20%20%20%27%404%20(640%20px)%27%2C%0A%20%20%20%20%20%20%27%405%20(320%20px)%27%2C%0A%20%20%20%20%5D%2C%0A%20%20%20%20datasets%3A%20%5B%0A%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20label%3A%20%27PNG%27%2C%0A%20%20%20%20%20%20%20%20data%3A%20%5B689%2C2747%2C1743%2C972%2C443%2C130%5D%2C%0A%20%20%20%20%20%20%20%20backgroundColor%3A%20%27%23c4a7e755%27%2C%0A%20%20%20%20%20%20%20%20borderColor%3A%20%27%23c4a7e7%27%2C%0A%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20label%3A%20%27WebP%27%2C%0A%20%20%20%20%20%20%20%20data%3A%20%5B126%2C71%2C56%2C41%2C23%2C10%5D%2C%0A%20%20%20%20%20%20%20%20backgroundColor%3A%20%27%230400ff55%27%2C%0A%20%20%20%20%20%20%20%20borderColor%3A%20%27%230400ff%27%2C%0A%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20label%3A%20%27AVIF%27%2C%0A%20%20%20%20%20%20%20%20data%3A%20%5B374%2C36%2C28%2C20%2C13%2C6%5D%2C%0A%20%20%20%20%20%20%20%20backgroundColor%3A%20%27%23ffaa0055%27%2C%0A%20%20%20%20%20%20%20%20borderColor%3A%20%27%23ffaa00%27%2C%0A%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%5D%2C%0A%20%20%7D%2C%0A%20%20options%3A%20%7B%0A%20%20%20%20scales%3A%20%7B%0A%20%20%20%20%20%20xAxes%3A%20%5B%7B%20scaleLabel%3A%20%7B%20display%3A%20true%2C%20labelString%3A%20%27Bildbreite%27%20%7D%20%7D%5D%2C%0A%20%20%20%20%20%20yAxes%3A%20%5B%7B%20scaleLabel%3A%20%7B%20display%3A%20true%2C%20labelString%3A%20%27kB%27%20%7D%20%7D%5D%2C%0A%20%20%20%20%7D%2C%0A%20%20%7D%2C%0A%7D}
+  {Diese Graphik} veranschaulicht, wie sich die Dateigröße eines Beispielbildes in den Formaten PNG, WebP und AVIF verhält, wenn die Pixelgröße mit dem NPM-Paket \enquote{sharp} gemäß der in Kapitel~\ref{subsec:images} beschriebenen Größen verkleinert wird.
+  Diese Untersuchung findet in der Arbeit keine Beachtung ist deshalb hier getrennt von der Arbeit.
+\end{multicols}
+
 \end{landscape}
   
 \end{document}
