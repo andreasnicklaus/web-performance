@@ -54,22 +54,29 @@
 \usepackage[autostyle=true,german=quotes]{csquotes}
 \usepackage[sfdefault]{roboto}
 \usepackage{hyperref}
-\hypersetup{
-    % urlbordercolor=1 1 1,S % set the outline of URL references
-    % linkbordercolor=1 1 1, % set the outline of internal references
-}
+
 \usepackage{microtype}
 \usepackage{hyphenat}
 \hyphenation{Mathe-matik wieder-gewinnen}
 
 \usepackage{graphicx}
 \usepackage{subcaption}
-\usepackage{lscape}
+\usepackage{pdflscape}
 
 \usepackage{multicol}
 
-\title{Optimierung einer VueJS-Webseite}
-\author{Andreas Nicklaus}
+\makeatletter         
+\renewcommand\maketitle{
+{\raggedright % Note the extra {
+\begin{center}
+{\Huge \bfseries \sffamily \@title }\\[2ex] 
+\@author\\[1ex] 
+\@date, Hochschule der Medien, Stuttgart\\[1ex]
+\end{center}}} % Note the extra }
+\makeatother
+
+\title{Optimierung einer VueJS-Webseite: Ladezeitenreduktion}
+\author{Andreas Nicklaus, an067, 44835}
 
 \begin{document}
 \maketitle
@@ -120,7 +127,7 @@ Ebenso wie WebPageTest ist auch PageSpeed Insights ein frei verfügbares Onlinet
 Allerdings wird hier kaum Wert auf die Auswertung des Renderverhaltens der Webseite gelegt, sondern ein Lighthousetest durchgeführt. Das heißt, dass statische Tests in 4 Kategorien durchgeführt werden: Performance, Barrierefreiheit, Best Practices und Suchmaschinenoptimierung (SEO).
 Für dieses Projekt wird lediglich der Performance Report ausgewertet.
 
-Der Performance Report gibt einen Bewertung zwischen 0 und 100 ab, der sich aus 5 Metriken zusammensetzt, die sich wiederrum aus vielen Messungen ergeben:
+Der Performance Report gibt eine Bewertung zwischen 0 und 100 ab, der sich aus 5 Metriken zusammensetzt, die sich wiederum aus vielen Messungen ergeben:
 
 \begin{enumerate}
   \item Der First Contentful Paint (FCP) gibt an, wie lange das Rendering dauert, bis das erste Element auf der Benutzeroberfläche angezeigt wird.
@@ -136,7 +143,7 @@ Der Performance Report gibt einen Bewertung zwischen 0 und 100 ab, der sich aus 
   SI ist allerdings auch eine Metrik, die den Effekt von allen Bestandteilen der Webseite zusammenfasst und ist deshalb nicht immer ohne Wissen über den Sourcecode gut nachvollziehbar. 
 \end{enumerate}
 
-Im Rahmen dieser Arbeit wird PageSpeed Insights lediglich verwendet, um einen Vergleichs-, bzw. Bestätigungswert als \enquote{zweite Meinung} für den Lighthouse Report von WebPageTest und Erklärungen zu den Ergebnissen zu bekommen, weil die Performance je nach Zustand des Server und Clients zwischen Ausführungen der Tests schwanken kann.
+Im Rahmen dieser Arbeit wird PageSpeed Insights lediglich verwendet, um einen Vergleichs-, bzw. Bestätigungswert als \enquote{zweite Meinung} für den Lighthouse Report von WebPageTest und Erklärungen zu den Ergebnissen zu bekommen, weil die Performance je nach Zustand des Servers und Clients zwischen Ausführungen der Tests schwanken kann.
 
 \subsection{Tool C: Lighthouse Chrome Extension}\label{subsec:Lighthouse}
 Die Google Chrome Extension \href{https://chromewebstore.google.com/detail/lighthouse/blipmdconlkpinefehnmjammfjpmpbjk}{Lighthouse} ist eine Erweiterung für den Browser Google Chrome und wurde von Google entwickelt.
@@ -148,7 +155,7 @@ Ebenso wie PageSpeed Insights wird die Lighthouse Chrome Extension im Rahmen die
 \subsection{Metriken und Maße}
 Für die Evaluierung der Testergebnisse durch die oben genannten Tools wurden die vielen Messwerte reduziert auf 9 Metriken, deren Entwicklung während des Optimierungsprozesses hier interessant sind.
 Dazu gehören von WebPageTest die \enquote{Page Weight} (dt.: Seitengewicht), die die Größe der geladenen Dateien in Bytes angibt, der LCP und SI (von hier an zur Unterscheidung mit \enquote{WPT LCP} und \enquote{WPT SI} abgekürzt).
-Von den Lighthouse Reports werden der generelle Performance Score (LH Score) sowie der FCP, LCP, SI, CLS und TTI ausgewertet.
+Von den Lighthouse Reports werden der generelle Performance-Score (LH Score) sowie der FCP, LCP, SI, CLS und TTI ausgewertet.
 
 \section{Verbesserungsschritte}
 Tabelle~\ref{tab:versionen} zeigt die 12 Versionen, die in dieser Arbeit verglichen werden.
@@ -166,7 +173,7 @@ Das ist oft effizient, weil das initiale HTML sehr klein ist und das Navigieren 
 Dieses Verfahren ist lediglich beim ersten Laden der Seite aufwendig, weil viele Dateien in sog. Chained Requests geladen werden.
 
 Im Prerendering werden die Vue-Templates, die mittels Vue-Router einem Pfad zugewiesen werden, einmalig im Build-Prozess der Seite zusammengefügt und gerendert.
-So kann das HTML, das im allerersten Request empfangen wird gleich mit Inhalten gefüllt werden, die im Browser sofort gerendert werden.
+So kann das HTML, das im allerersten Request empfangen wird, gleich mit Inhalten gefüllt werden, die im Browser sofort gerendert werden.
 
 \begin{lstlisting}[language=JavaScript, caption={Implementierung des Single Page Prerenderings}, label={lst:prerender}]
 new PrerenderSpaPlugin({
@@ -187,7 +194,7 @@ new PrerenderSpaPlugin({
 \end{lstlisting}
 
 Das Codebeispiel~\ref{lst:prerender} zeigt die Implementierung mithilfe des NPM-Packages PrerenderSpaPlugin.
-Das Plugin nutzt den PuppeteerRenderer, der in einem Headless Chrome, die Seite öffnet und rendert.
+Das Plugin nutzt den PuppeteerRenderer, der in einem Headless Chrome die Seite öffnet und rendert.
 Sobald ein HTML-Element mit dem Attribut \enquote{data-view} vorhanden ist, speichert das Plugin das HTML der Seite ab.
 Deshalb muss das Vue-Template der View das Attribut \verb|data-view| bekommen.
 
@@ -198,7 +205,7 @@ Diese Eigenschaft wird durch für jede Route händisch festgelegt (s. Codebeispi
 
 \subsection{Render-Blocking Stylesheets}
 Die zweite Hürde, die für schnelles Rendering der Seite genommen wurde, ergibt sich aus der Reihenfolge, in der Dateien geladen und geparst werden.
-Das HTML wird top-down (dt.: von oben nach unten) geparst und die verlinkten Resourcen i.d.R. auch in dieser Reihenfolge geladen, bevor das Parsing und Rendering des HTML weiterläuft.
+Das HTML wird top-down (dt.: von oben nach unten) geparst und die verlinkten Ressourcen i.d.R. auch in dieser Reihenfolge geladen, bevor das Parsing und Rendering des HTML weiterläuft.
 Elemente und Ressourcen müssen daher explizit verzögert geladen werden.
 Bei JavaScript kann das entweder dadurch erreicht werden, dass Script-Tags ans Ende des HTML-Bodys gestellt oder mit dem defer-Attribut ausgezeichnet werden.
 Zweiteres wird in v01 automatisiert erledigt (s. Codebeispiel~\ref{lst:prerender}, Zeile 10).
@@ -238,6 +245,7 @@ Codebeispiel~\ref{lst:unchained} zeigt die Einbindung in die index.html ab Versi
 Die Versionen v05 und v06 beinhalten hauptsächlich Optimierungen bezüglich der Bytegröße und der Pixelgröße der verwendeten Bilder.
 Bis v05 wurden alle Bilder als \verb|img|-Tag eingebunden und bis auf das Brand-Logo und ein Hintergrundbild (SVG) sind alle Bilder im WebP-Format in Originalgröße verlinkt.
 Die Darstellungsgröße dieser Bilder auf dem Bildschirm wurde bis dahin lediglich über CSS bestimmt.
+\pagebreak
 
 \begin{lstlisting}[language=html, caption={Einbindung von Bildern als picture-Tag}, label={lst:images}]
 <picture>
@@ -256,7 +264,7 @@ Die Darstellungsgröße dieser Bilder auf dem Bildschirm wurde bis dahin ledigli
 \end{lstlisting}
 
 Das Codebeispiel~\ref{lst:images} zeigt die Einbindung von Bildern im \verb|picture|-Tag mit mehreren Bildgrößen und Bildformaten.
-Es wird davon ausgegangen, das jeder Browser heute entweder Bilder im AVIF-Format oder WebP darstellen kann.
+Es wird davon ausgegangen, dass jeder Browser heute entweder Bilder im AVIF-Format oder WebP-Format darstellen kann.
 Aus diesem Grund werden zwei Sourcesets definiert, die jeweils die Bilder in 4 verschiedenen Breiten (200px, 780px, 1123px und 1920px) anbieten.
 Außerdem wird direkt im HTML mit angegeben, welche Breite das Bild im HTML haben wird (s. Zeilen 5 und 10), damit der Browser das passende Bild laden kann.
 
@@ -275,7 +283,7 @@ Für die Version v07 hat eine Untersuchung ergeben, dass ein sehr großer Teil d
 \end{figure}
 
 Aus diesem Grund wurde in v07 lediglich eine Änderung vorgenommen: Da sehr viele Bootstrap-Icons importiert werden, von denen aber nur wenige verwendet werden, werden jetzt lediglich die Icons importiert, die auf der Seite auch verwendet werden.
-Codebeispiel~\ref{lst:icons} zeigt, wie die Icons importiert und als Componenten registriert werden.
+Codebeispiel~\ref{lst:icons} zeigt, wie die Icons importiert und als Komponenten registriert werden.
 
 \begin{lstlisting}[language=JavaScript, caption={Epliziter Import und Einbindung von Bootstrap-Icons}, label={lst:icons}]
 // vorher: alle Icons werden importiert und eingebunden
@@ -313,7 +321,7 @@ Lazy-Loading bedeutet, dass die Bilder erst geladen werden, wenn der Client für
 
 \section{Experimente und Analyse}\label{sec:experimente}
 Um die Versionen zu testen, wurden alle Versionen als eigenen Dockerimage erstellt und auf demselben Host als getrennte Dockercontainer deployt.
-Anschließend wurde der NGINX-Proxy-Manager so konfiguriert das die Container unter der jeweiligen Versionsnummer online erreichbar sind.
+Anschließend wurde der NGINX-Proxy-Manager so konfiguriert, dass die Container unter der jeweiligen Versionsnummer online erreichbar sind.
 Somit ist beispielweise die Version v00 unter \href{https://v00.leto.andreasnicklaus.de}{v00.leto.andreasnicklaus.de} erreichbar.
 
 So konnten alle Versionen mit WebPageTest getestet und miteinander verglichen werden.
@@ -321,7 +329,7 @@ So konnten alle Versionen mit WebPageTest getestet und miteinander verglichen we
 \subsection{Testergebnisse}
 Tabelle~\ref{tab:versionen} zeigt die rohen Ergebnisse aus den mit WebPageTest ausgeführten Tests.
 Dabei ist auffällig, dass das Prerendering der Version v01 direkt Verbesserungen allen Messwerten außer der Page Weight und der TTI bringt.
-Ebenso positiv auffällig ist das Einführen von Bilder im AVIF-Format und den Responsive Image Sizes in der Version v05, die insbesondere Verbesserungen im SI, der Page Weight (s. Abbildung~\ref{fig:PageWeight}) und der TTI (s. Abbildung~\ref{fig:TTI}) gebracht haben.
+Ebenso positiv auffällig ist das Einführen von Bildern im AVIF-Format und den Responsive Image Sizes in der Version v05, die insbesondere Verbesserungen im SI, der Page Weight (s. Abbildung~\ref{fig:PageWeight}) und der TTI (s. Abbildung~\ref{fig:TTI}) gebracht haben.
 
 Hinweis: Da die Tests mit allen Tools starken Schwankungen bis zu 20\% unterliegen, sind kleine Verschlechterungen oder Verbesserungen in einzelnen Versionen nicht zu beachten, wenn die Veränderung nicht in den Folgeversionen Bestand behält.
 
@@ -341,7 +349,7 @@ Hinweis: Da die Tests mit allen Tools starken Schwankungen bis zu 20\% unterlieg
   \begin{subfigure}{.5\textwidth}
     \centering
     \includegraphics[width=.8\linewidth]{images/LH Score.png}
-    \caption{Lighthouse Performance Score der Startseite}
+    \caption{Lighthouse Performance-Score der Startseite}
     \label{fig:LHScore}
   \end{subfigure}
   \begin{subfigure}{.5\textwidth}
@@ -356,12 +364,12 @@ Hinweis: Da die Tests mit allen Tools starken Schwankungen bis zu 20\% unterlieg
 
 \subsection{Interpretation}
 Die Abbildung~\ref{fig:content} vergleicht die Größe der Seite nach Dateityp vor dem Projekt (v00) und nach dem Projekt (v11).
-Die Seitengröße von 2789 kB auf 627 kB (-77,5\%) reduziert (vgl. Abbildung~\ref{fig:PageWeight}).
+Die Seitengröße wurde von 2789 kB auf 627 kB (-77,5\%) reduziert (vgl. Abbildung~\ref{fig:PageWeight}).
 2063 kB der eingesparten 2162 kB wurden alleine durch die Verkleinerung der Bilder eingespart (von ca. 2100 kB auf 35,8 kB für Bilder).
 Daraus lässt sich zumindest für dieses Projekt darauf schließen, dass das Laden der Bilder für die Seitengröße das größte Potenzial für Verbesserungen hatte.
 
-Ebenso können wir beobachten, dass das Prerendering der statischen Seiten das HTML zwar um ca. 17 kB vergrößert, aber den FCP, die Ladzeiten für verlinkte Ressourcen (LCP und SI) und dadurch den Lighthouse Performance Score beachtlich verbessert.
-Diese zwei Optimierungsschritte haben sich als sehr gute Optimierungsschritte herausgestellt.
+Ebenso können wir beobachten, dass das Prerendering der statischen Seiten das HTML zwar um ca. 17 kB vergrößert, aber den FCP, die Ladezeiten für verlinkte Ressourcen (LCP und SI) und dadurch den Lighthouse Performance-Score beachtlich verbessert.
+Diese zwei Optimierungsschritte haben sich als die besten Optimierungsschritte herausgestellt.
 
 \begin{figure}[h]
   \begin{subfigure}{.5\textwidth}
@@ -376,7 +384,7 @@ Diese zwei Optimierungsschritte haben sich als sehr gute Optimierungsschritte he
     \caption{Version v11}
     \label{fig:v11content}
   \end{subfigure}
-  \caption{Vergleich der Dateitypen bzgl. der unkomprimierten Bytegröße zwischen den Versionen v00 und v11}
+  \caption{Vergleich der Dateitypen bzgl. der unkomprimierten Bytegröße zwischen den Versionen v00 (insg.: 2789 kB) und v11 (insg.: 627 kB)}
   \label{fig:content}
 \end{figure}
 
@@ -400,7 +408,7 @@ Insgesamt ist das Projekt ein Erfolg, da die Rahmenbedingungen bzgl. Speicherpla
 \begin{table}[h]
   \begin{tabular}{|l|l|}
     \hline
-    Versionsbezeichnung & Änderungsbeschreibung\\
+    \textbf{Versionsbezeichnung} & \textbf{Änderungsbeschreibung}\\
     \hline
     v00 & -- (Ursprungsversion vor Projektbeginn)\\
     \hline
@@ -434,7 +442,7 @@ Insgesamt ist das Projekt ein Erfolg, da die Rahmenbedingungen bzgl. Speicherpla
 \begin{table}[h]
   \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|}
     \hline
-    Version & Page Weight (kB) & WPT LCP (ms) & WPT SI (ms) & LH Score & FCP (ms) & LCP (ms) & SI (ms) & TTI (ms) & CLS \\
+    \textbf{Version} & \textbf{Page Weight (kB)} & \textbf{WPT LCP (ms)} & \textbf{WPT SI (ms)} & \textbf{LH Score} & \textbf{FCP (ms)} & \textbf{LCP (ms)} & \textbf{SI (ms)} & \textbf{TTI (ms)} & \textbf{CLS} \\
     \hline
     v00 & 2789 kB & 4736 ms & 5970 ms & 33 & 4600 ms & 5200 ms & 7500 ms & 4600 ms & 0,751 \\
     \hline
@@ -464,13 +472,13 @@ Insgesamt ist das Projekt ein Erfolg, da die Rahmenbedingungen bzgl. Speicherpla
   \caption{Rohergebnisse der WebPageTest-Ergebnisse pro Version. Hinweis: Die rohen Werte unterliegen bei mehrfacherer Testausführung starken Schwankungen (bis zu 20\% in beide Richtungen).}\label{tab:versionen}
 \end{table}
 
-\section*{Was sonst keine Platz gefunden hat: Bilddateigrößen und Bildformate}
+\section*{Was sonst keinen Platz gefunden hat: Bilddateigrößen und Bildformate}
 \begin{multicols}{2}
   Neben den in dieser Arbeit beschriebenen Optimierungsergebnissen wurde eine weitere Beobachtung gemacht, die sonst keinen Platz gefunden hätte.
   Bei der Untersuchung von Dateigrößen im Vergleich zur Pixelgröße ist aufgefallen, dass sich WebP und AVIF unterschiedlich verhalten, wenn die Pixelgröße verändert wird.
   \href{https://quickchart.io/chart?w=400&h=400&c=%7B%0A%20%20type%3A%20%27line%27%2C%0A%20%20data%3A%20%7B%0A%20%20%20%20labels%3A%20%5B%0A%20%20%20%20%20%20%27Original%20(1900%20px)%27%2C%0A%20%20%20%20%20%20%27%401%20(1600%20px)%27%2C%0A%20%20%20%20%20%20%27%402%20(1280%20px)%27%2C%0A%20%20%20%20%20%20%27%403%20(960%20px)%27%2C%0A%20%20%20%20%20%20%27%404%20(640%20px)%27%2C%0A%20%20%20%20%20%20%27%405%20(320%20px)%27%2C%0A%20%20%20%20%5D%2C%0A%20%20%20%20datasets%3A%20%5B%0A%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20label%3A%20%27PNG%27%2C%0A%20%20%20%20%20%20%20%20data%3A%20%5B689%2C2747%2C1743%2C972%2C443%2C130%5D%2C%0A%20%20%20%20%20%20%20%20backgroundColor%3A%20%27%23c4a7e755%27%2C%0A%20%20%20%20%20%20%20%20borderColor%3A%20%27%23c4a7e7%27%2C%0A%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20label%3A%20%27WebP%27%2C%0A%20%20%20%20%20%20%20%20data%3A%20%5B126%2C71%2C56%2C41%2C23%2C10%5D%2C%0A%20%20%20%20%20%20%20%20backgroundColor%3A%20%27%230400ff55%27%2C%0A%20%20%20%20%20%20%20%20borderColor%3A%20%27%230400ff%27%2C%0A%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20label%3A%20%27AVIF%27%2C%0A%20%20%20%20%20%20%20%20data%3A%20%5B374%2C36%2C28%2C20%2C13%2C6%5D%2C%0A%20%20%20%20%20%20%20%20backgroundColor%3A%20%27%23ffaa0055%27%2C%0A%20%20%20%20%20%20%20%20borderColor%3A%20%27%23ffaa00%27%2C%0A%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%5D%2C%0A%20%20%7D%2C%0A%20%20options%3A%20%7B%0A%20%20%20%20scales%3A%20%7B%0A%20%20%20%20%20%20xAxes%3A%20%5B%7B%20scaleLabel%3A%20%7B%20display%3A%20true%2C%20labelString%3A%20%27Bildbreite%27%20%7D%20%7D%5D%2C%0A%20%20%20%20%20%20yAxes%3A%20%5B%7B%20scaleLabel%3A%20%7B%20display%3A%20true%2C%20labelString%3A%20%27kB%27%20%7D%20%7D%5D%2C%0A%20%20%20%20%7D%2C%0A%20%20%7D%2C%0A%7D}
-  {Diese Graphik} veranschaulicht, wie sich die Dateigröße eines Beispielbildes in den Formaten PNG, WebP und AVIF verhält, wenn die Pixelgröße mit dem NPM-Paket \enquote{sharp} gemäß der in Kapitel~\ref{subsec:images} beschriebenen Größen verkleinert wird.
-  Diese Untersuchung findet in der Arbeit keine Beachtung ist deshalb hier getrennt von der Arbeit.
+  {Diese Grafik} veranschaulicht, wie sich die Dateigröße eines Beispielbildes in den Formaten PNG, WebP und AVIF verhält, wenn die Pixelgröße mit dem NPM-Paket \enquote{sharp} gemäß der in Kapitel~\ref{subsec:images} beschriebenen Größen verkleinert wird.
+  Diese Untersuchung findet in der Arbeit keine Beachtung und ist deshalb hier getrennt von der Arbeit.
 \end{multicols}
 
 \end{landscape}
